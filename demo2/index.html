@@ -1,0 +1,2650 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShareID Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+  /* === Light mode forcé (no dark) === */
+  :root {
+    color-scheme: light;
+    --shareid-blue: #3B4DBE;
+    --shareid-blue-hover: #2F3FA8;
+    --shareid-blue-light: rgba(59, 77, 190, 0.10);
+    --shareid-blue-light2: rgba(59, 77, 190, 0.18);
+    --bg: #fafafb;
+    --bg-elev: #ffffff;
+    --bg-card: #ffffff;
+    --bg-sidebar: #fcfcfd;
+    --bg-subtle: #f5f5f7;
+    --text: #0a0a0c;
+    --text-2: #555562;
+    --text-3: #93939d;
+    --border: #ececf0;
+    --border-strong: #d4d4dc;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #0284c7;
+    --shadow-sm: 0 1px 2px rgba(20,20,30,0.04);
+    --shadow-md: 0 4px 16px rgba(20,20,30,0.06);
+    --shadow-lg: 0 10px 40px rgba(20,20,30,0.08);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === BRAND === */
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 32px; height: 32px;
+    background: var(--shareid-blue);
+    border-radius: 9px;
+    display: grid; place-items: center;
+    color: white; font-weight: 800; font-size: 15px;
+    box-shadow: 0 0 0 4px var(--shareid-blue-light);
+  }
+  .brand-name { font-weight: 700; font-size: 16px; }
+  .brand-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+  /* === WELCOME view === */
+  .welcome-view { min-height: 100vh; display: none; align-items: center; justify-content: center; background: linear-gradient(135deg, #f7f7fb 0%, #eef0fa 100%); padding: 20px; }
+  .welcome-view.active { display: flex; }
+  .welcome-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 40px 36px;
+    max-width: 440px;
+    width: 100%;
+    display: flex; flex-direction: column;
+    gap: 18px;
+  }
+  .welcome-card .brand { justify-content: center; margin-bottom: 8px; }
+  .welcome-card h1 { font-size: 22px; font-weight: 800; margin: 0; text-align: center; }
+  .welcome-card p { font-size: 14px; color: var(--text-2); margin: 0; text-align: center; }
+
+  /* === BUTTONS === */
+  .btn {
+    appearance: none; border: 1.5px solid var(--border-strong);
+    background: var(--bg-card); color: var(--text);
+    padding: 11px 22px; border-radius: 10px;
+    font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 150ms;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--text-3); background: var(--bg-elev); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary {
+    background: var(--shareid-blue); color: white;
+    border-color: var(--shareid-blue);
+    box-shadow: 0 1px 3px rgba(59,77,190,0.3);
+  }
+  .btn.primary:hover:not(:disabled) {
+    background: var(--shareid-blue-hover);
+    border-color: var(--shareid-blue-hover);
+    box-shadow: 0 4px 12px rgba(59,77,190,0.35);
+  }
+  .btn.danger { color: var(--danger); border-color: rgba(220,38,38,0.3); }
+  .btn.danger:hover:not(:disabled) { background: rgba(220,38,38,0.08); }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.ghost:hover:not(:disabled) { background: var(--bg-subtle); }
+  .btn.large { padding: 13px 26px; font-size: 15px; }
+  .btn.sm { padding: 7px 14px; font-size: 12px; }
+  .btn.full { width: 100%; justify-content: center; }
+
+  /* === INPUTS === */
+  .text-input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    transition: border-color 150ms;
+  }
+  .text-input:focus { outline: none; border-color: var(--shareid-blue); }
+  .text-input::placeholder { color: var(--text-3); }
+  .input-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .input-hint { font-size: 12px; color: var(--text-3); }
+
+  /* === DASHBOARD layout (Igor blue sidebar) === */
+  .dashboard-view { display: none; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .dashboard-view.active { display: grid; }
+
+  .dash-sidebar {
+    background: var(--shareid-blue);
+    border-right: 1px solid var(--shareid-blue-hover);
+    display: flex; flex-direction: column;
+    padding: 18px 14px;
+    color: rgba(255,255,255,0.85);
+  }
+  .dash-sidebar .brand { padding: 4px 6px 18px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 14px; }
+  .dash-sidebar .brand-mark { background: white; color: var(--shareid-blue); box-shadow: 0 0 0 4px rgba(255,255,255,0.15); }
+  .dash-sidebar .brand-name { color: white; }
+  .dash-sidebar .brand-sub { color: rgba(255,255,255,0.65); }
+  .dash-nav { display: flex; flex-direction: column; gap: 2px; }
+  .dash-nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.78);
+    transition: all 150ms;
+    font-weight: 500;
+    font-size: 13px;
+  }
+  .dash-nav-item:hover { background: rgba(255,255,255,0.10); color: white; }
+  .dash-nav-item.active {
+    background: white;
+    color: var(--shareid-blue);
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .dash-nav-item.active:hover { background: white; color: var(--shareid-blue); }
+  .dash-nav-icon { width: 18px; text-align: center; flex-shrink: 0; }
+
+  .dash-sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* === Topbar === */
+  .dash-main { display: flex; flex-direction: column; min-width: 0; }
+  .dash-topbar {
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 5;
+  }
+  .topbar-business {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px; border-radius: 8px;
+    background: var(--bg-subtle);
+    font-size: 13px; font-weight: 600;
+  }
+  .topbar-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--shareid-blue);
+    color: white; font-weight: 700;
+    display: grid; place-items: center;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .dash-content {
+    flex: 1;
+    padding: 32px 32px 64px;
+    overflow-y: auto;
+  }
+
+  /* === Section common === */
+  .section-page { display: none; flex-direction: column; gap: 24px; }
+  .section-page.active { display: flex; }
+  .section-h1 { font-size: 24px; font-weight: 800; margin: 0; }
+  .section-h1-sub { font-size: 14px; color: var(--text-2); margin: 4px 0 0; }
+  .section-header { display: flex; align-items: flex-start; gap: 12px; }
+  .section-header .grow { flex: 1; }
+
+  /* === KPI cards === */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+  }
+  .kpi-label { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700; color: var(--text-3); }
+  .kpi-value { font-size: 26px; font-weight: 800; margin-top: 6px; line-height: 1.1; }
+  .kpi-trend { font-size: 12px; color: var(--success); margin-top: 4px; font-weight: 600; }
+  .kpi-trend.down { color: var(--danger); }
+
+  /* === Charts grid === */
+  .reporting-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) { .reporting-grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+  }
+  .panel-h { font-size: 14px; font-weight: 700; margin: 0 0 14px; }
+  .panel-h-sub { font-size: 12px; color: var(--text-3); font-weight: 500; margin: 0 0 10px; }
+
+  /* SVG chart styles */
+  .chart-line { width: 100%; height: 220px; }
+  .chart-line .grid { stroke: var(--border); stroke-width: 1; }
+  .chart-line .axis-label { fill: var(--text-3); font-size: 10px; }
+  .chart-line .data-area { fill: var(--shareid-blue); fill-opacity: 0.08; }
+  .chart-line .data-line { fill: none; stroke: var(--shareid-blue); stroke-width: 2; }
+  .chart-line .data-dot { fill: var(--shareid-blue); }
+
+  .chart-donut { width: 200px; height: 200px; margin: 0 auto; display: block; }
+  .chart-donut .ring { stroke-width: 24; fill: none; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .donut-legend-item .swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  .verdict-bars { display: flex; flex-direction: column; gap: 12px; }
+  .verdict-bar { }
+  .verdict-bar .head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; font-weight: 600; }
+  .verdict-bar .track { background: var(--bg-subtle); border-radius: 4px; height: 8px; overflow: hidden; }
+  .verdict-bar .fill-green { background: var(--success); height: 100%; }
+  .verdict-bar .fill-orange { background: var(--warning); height: 100%; }
+  .verdict-bar .fill-red { background: var(--danger); height: 100%; }
+
+  .geo-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .geo-row:last-child { border-bottom: 0; }
+  .geo-row .flag { font-size: 20px; }
+  .geo-row .country { font-weight: 600; flex: 1; }
+  .geo-row .pct { color: var(--text-2); font-weight: 500; }
+
+  /* === Tables === */
+  .table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    text-align: left; padding: 12px 14px;
+    font-weight: 700; font-size: 11px;
+    color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .data-table tr:last-child td { border-bottom: 0; }
+  .data-table tr.clickable { cursor: pointer; }
+  .data-table tr.clickable:hover { background: var(--bg-subtle); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 5px;
+    background: var(--bg-subtle);
+    color: var(--text-2);
+  }
+  .badge.success { background: rgba(22,163,74,0.12); color: var(--success); }
+  .badge.warning { background: rgba(217,119,6,0.12); color: var(--warning); }
+  .badge.danger { background: rgba(220,38,38,0.12); color: var(--danger); }
+  .badge.info { background: rgba(2,132,199,0.12); color: var(--info); }
+  .badge.eidas-eleve { background: rgba(22,163,74,0.12); color: var(--success); }
+  .badge.eidas-substantiel { background: rgba(2,132,199,0.12); color: var(--info); }
+  .badge.eidas-faible { background: rgba(110,110,118,0.12); color: var(--text-2); }
+
+  /* === Onboarding filters === */
+  .filters-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .filter-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--bg-subtle);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-2);
+  }
+
+  /* === Drawer === */
+  .drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(20,20,30,0.4);
+    backdrop-filter: blur(2px);
+    display: none; z-index: 100;
+  }
+  .drawer-overlay.open { display: block; }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 480px; max-width: 100%;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 250ms;
+    z-index: 101;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; background: var(--bg-card);
+    z-index: 1;
+  }
+  .drawer-header h2 { margin: 0; font-size: 16px; font-weight: 700; flex: 1; }
+  .drawer-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+
+  .verdict-step {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .verdict-step .step-name { font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .verdict-criteria { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .json-block {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* === Modal === */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(20,20,30,0.4);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px; z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    max-width: 480px; width: 100%;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modal-header h2 { margin: 0; font-size: 16px; font-weight: 700; flex: 1; }
+  .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer {
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+
+  /* === Workflow cards (reused v1) === */
+  .workflows-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .workflow-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 150ms;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .workflow-card:hover { border-color: var(--shareid-blue); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .workflow-card .name { font-weight: 700; font-size: 15px; }
+  .workflow-card .meta-line { font-size: 12px; color: var(--text-2); display: flex; gap: 6px; align-items: center; }
+  .workflow-card .meta-line .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-3); }
+  .workflow-card .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .workflow-card .footer { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+  .new-workflow-card {
+    background: var(--bg-card);
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 150ms;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 142px;
+    color: var(--text-2);
+    font-weight: 600;
+  }
+  .new-workflow-card:hover { border-color: var(--shareid-blue); color: var(--shareid-blue); }
+
+  /* === Empty state === */
+  .empty-state {
+    background: var(--bg-card);
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 56px 32px;
+    text-align: center;
+  }
+  .empty-state .glyph { font-size: 40px; margin-bottom: 14px; opacity: 0.4; }
+  .empty-state h3 { font-size: 17px; font-weight: 700; margin: 0 0 6px; }
+  .empty-state p { color: var(--text-2); margin: 0 0 20px; font-size: 13px; }
+
+  /* === QR codes section === */
+  .qr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .qr-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .qr-card .qr-name { font-weight: 700; font-size: 14px; }
+  .qr-card .qr-img-wrap {
+    background: white; border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+    display: grid; place-items: center;
+  }
+
+  /* === Demo app === */
+  .demo-app-wrap {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    align-items: center;
+  }
+  @media (max-width: 800px) { .demo-app-wrap { grid-template-columns: 1fr; } }
+  .demo-app-phone {
+    background: linear-gradient(160deg, #1c1c20 0%, #2a2a35 100%);
+    color: white;
+    border-radius: 24px;
+    padding: 30px 26px;
+    box-shadow: var(--shadow-lg);
+    max-width: 320px; margin: 0 auto;
+    aspect-ratio: 9/16;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .demo-app-phone .da-title { font-size: 16px; font-weight: 800; text-align: center; }
+  .demo-app-phone .da-sub { font-size: 11px; opacity: 0.6; text-align: center; }
+  .demo-app-phone .da-list {
+    flex: 1; display: flex; flex-direction: column; gap: 8px;
+    margin-top: 12px;
+  }
+  .demo-app-phone .da-wf {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 11px;
+  }
+  .demo-app-phone .da-wf .nm { font-weight: 700; }
+  .demo-app-phone .da-wf .st { opacity: 0.6; font-size: 10px; }
+  .demo-app-phone .da-cta {
+    background: var(--shareid-blue);
+    color: white; padding: 12px;
+    border-radius: 10px; font-weight: 700;
+    font-size: 13px; text-align: center;
+  }
+
+  /* === Settings === */
+  .settings-tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .settings-tab {
+    padding: 10px 16px; cursor: pointer;
+    font-weight: 600; font-size: 13px;
+    color: var(--text-3); border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .settings-tab.active { color: var(--shareid-blue); border-bottom-color: var(--shareid-blue); }
+  .settings-panel { display: none; }
+  .settings-panel.active { display: flex; flex-direction: column; gap: 18px; }
+
+  .billing-gauge {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 22px;
+  }
+  .billing-gauge .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .billing-gauge .num { font-size: 28px; font-weight: 800; }
+  .billing-gauge .quota { font-size: 14px; color: var(--text-2); }
+  .billing-gauge .track { background: var(--bg-subtle); border-radius: 6px; height: 12px; overflow: hidden; }
+  .billing-gauge .fill { background: var(--shareid-blue); height: 100%; transition: width 250ms; }
+  .billing-gauge .pct { font-size: 12px; color: var(--text-2); margin-top: 8px; font-weight: 500; }
+
+  .api-key-row {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .api-key-row .akr-name { font-size: 13px; font-weight: 700; }
+  .api-key-row .akr-val {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 11px; color: var(--text-2);
+    background: var(--bg-subtle); padding: 8px 10px;
+    border-radius: 6px; word-break: break-all;
+  }
+  .api-key-row .akr-actions { display: flex; gap: 6px; }
+
+  /* === Branding step (reused) === */
+  .color-picker-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .color-picker-row .swatch {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .color-picker-row .swatch input[type=color] {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0; padding: 0; cursor: pointer; opacity: 0;
+  }
+  .color-picker-row .body { flex: 1; }
+  .color-picker-row .label { font-weight: 600; font-size: 13px; }
+  .color-picker-row .value-hex { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; color: var(--text-3); }
+
+  .brand-preview {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+  }
+  .brand-preview-phone {
+    max-width: 280px; margin: 0 auto;
+    background: linear-gradient(160deg, #1c1c20 0%, #2a2a35 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 22px 20px;
+    box-shadow: var(--shadow-lg);
+    display: flex; flex-direction: column; gap: 14px;
+    min-height: 320px;
+  }
+  .brand-preview-phone .bp-logo {
+    width: 100%; height: 32px;
+    background: var(--brand-primary, var(--shareid-blue));
+    border-radius: 7px;
+    display: grid; place-items: center;
+    color: white; font-weight: 700;
+    overflow: hidden;
+  }
+  .brand-preview-phone .bp-logo img { max-height: 100%; max-width: 100%; object-fit: contain; }
+  .brand-preview-phone .bp-welcome { font-size: 16px; font-weight: 700; text-align: center; margin: 8px 0; }
+  .brand-preview-phone .bp-mock {
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 30px; text-align: center;
+    flex: 1; display: grid; place-items: center;
+    color: rgba(255,255,255,0.5); font-size: 36px;
+  }
+  .brand-preview-phone .bp-cta {
+    background: var(--brand-primary, var(--shareid-blue));
+    color: white; border-radius: 8px; padding: 11px;
+    text-align: center; font-weight: 600; font-size: 13px;
+  }
+
+  /* === WIZARD view (preserved v1 minor adapts) === */
+  .wizard-view { display: none; grid-template-columns: 280px 1fr; min-height: 100vh; }
+  .wizard-view.active { display: grid; }
+  .wiz-sidebar {
+    background: var(--shareid-blue);
+    border-right: 1px solid var(--shareid-blue-hover);
+    padding: 24px 20px;
+    display: flex; flex-direction: column;
+    color: rgba(255,255,255,0.85);
+  }
+  .wiz-sidebar .brand { padding: 4px 6px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 24px; }
+  .wiz-sidebar .brand-mark { background: white; color: var(--shareid-blue); box-shadow: 0 0 0 4px rgba(255,255,255,0.15); }
+  .wiz-sidebar .brand-name { color: white; }
+  .wiz-sidebar .brand-sub { color: rgba(255,255,255,0.65); }
+  .stepper-section {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); padding: 8px 6px;
+    font-weight: 700;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .stepper-back {
+    cursor: pointer; color: rgba(255,255,255,0.78);
+    text-transform: none; letter-spacing: 0; font-size: 11px;
+    font-weight: 500;
+  }
+  .stepper-back:hover { color: white; }
+  .stepper { display: flex; flex-direction: column; gap: 2px; }
+  .step-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.65);
+    transition: all 150ms;
+  }
+  .step-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: white; }
+  .step-item.active { background: white; color: var(--shareid-blue); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .step-item.done { color: rgba(255,255,255,0.85); }
+  .step-item.done .step-num { background: rgba(255,255,255,0.95); color: var(--shareid-blue); border-color: rgba(255,255,255,0.95); }
+  .step-item.active .step-num { background: var(--shareid-blue); color: white; border-color: var(--shareid-blue); box-shadow: 0 0 0 3px var(--shareid-blue-light); }
+  .step-item.locked { cursor: not-allowed; opacity: 0.4; }
+  .step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    display: grid; place-items: center;
+    font-size: 11px; font-weight: 700;
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    flex-shrink: 0;
+  }
+  .step-item.done .step-num::before { content: '✓'; }
+  .step-item.done .step-num span { display: none; }
+  .step-body { display: flex; flex-direction: column; min-width: 0; }
+  .step-label { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .step-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.3; }
+  .step-item.active .step-sub { color: var(--shareid-blue); opacity: 0.7; }
+  .step-item.done .step-sub { color: rgba(255,255,255,0.55); }
+
+  .wiz-main { display: flex; flex-direction: column; min-width: 0; }
+  .stage { flex: 1; padding: 56px 64px; max-width: 880px; margin: 0 auto; width: 100%; }
+  @media (max-width: 800px) {
+    .wizard-view { grid-template-columns: 1fr; }
+    .wiz-sidebar { display: none; }
+    .stage { padding: 32px 20px; }
+    .dashboard-view { grid-template-columns: 1fr; }
+    .dash-sidebar { display: none; }
+  }
+
+  .step-page { display: none; flex-direction: column; gap: 28px; animation: fadeIn 200ms ease-out; }
+  .step-page.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .step-eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--shareid-blue); font-weight: 700; }
+  .step-title { font-size: 28px; font-weight: 800; margin: 0; line-height: 1.2; }
+  .step-desc { font-size: 15px; color: var(--text-2); margin: 0; max-width: 640px; }
+  .step-header { display: flex; flex-direction: column; gap: 8px; }
+
+  .cards-grid { display: grid; gap: 14px; }
+  .cards-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .cards-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 700px) { .cards-grid.cols-2, .cards-grid.cols-3 { grid-template-columns: 1fr; } }
+
+  .choice-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    cursor: pointer; transition: all 150ms;
+    text-align: left; font: inherit; color: var(--text);
+    display: flex; flex-direction: column; gap: 6px;
+    position: relative;
+  }
+  .choice-card:hover { border-color: var(--shareid-blue); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .choice-card.active { border-color: var(--shareid-blue); background: var(--shareid-blue-light); box-shadow: 0 0 0 4px var(--shareid-blue-light); }
+  .choice-card .check {
+    position: absolute; top: 14px; right: 14px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    background: var(--bg-card); transition: all 150ms;
+  }
+  .choice-card.active .check { background: var(--shareid-blue); border-color: var(--shareid-blue); }
+  .choice-card.active .check::after { content: '✓'; color: white; font-size: 12px; font-weight: 700; display: grid; place-items: center; width: 100%; height: 100%; }
+  .choice-card .ribbon {
+    position: absolute; top: 14px; right: 50px;
+    font-size: 10px; font-weight: 700;
+    color: var(--shareid-blue); letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .choice-title { font-weight: 700; font-size: 15px; padding-right: 36px; }
+  .choice-sub { font-size: 13px; color: var(--text-2); }
+
+  .option-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; transition: all 150ms;
+    cursor: pointer;
+  }
+  .option-row.disabled { opacity: 0.5; cursor: not-allowed; }
+  .option-row.active { border-color: var(--shareid-blue); background: var(--shareid-blue-light); }
+  .option-row .body { flex: 1; min-width: 0; }
+  .option-row .label { font-weight: 600; font-size: 13px; }
+  .option-row .desc { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .option-row .lock { font-size: 11px; color: var(--text-3); margin-left: 8px; font-weight: 400; }
+
+  .toggle {
+    position: relative; display: inline-block;
+    width: 38px; height: 22px; flex-shrink: 0; margin-top: 1px;
+  }
+  .toggle input { display: none; }
+  .toggle .track { position: absolute; inset: 0; background: var(--border-strong); border-radius: 999px; transition: background 150ms; }
+  .toggle .thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform 150ms; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .toggle input:checked + .track { background: var(--shareid-blue); }
+  .toggle input:checked ~ .thumb { transform: translateX(16px); }
+
+  .stage-footer {
+    margin-top: 24px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .stage-footer .left { display: flex; gap: 8px; }
+  .stage-footer .right { display: flex; gap: 8px; }
+
+  .reveal { opacity: 0; max-height: 0; overflow: hidden; transition: opacity 250ms ease-out, max-height 350ms ease-out; }
+  .reveal.shown { opacity: 1; max-height: 2000px; }
+
+  .section { display: flex; flex-direction: column; gap: 14px; }
+  .section-title { font-size: 16px; font-weight: 700; margin: 0; }
+  .section-desc { font-size: 13px; color: var(--text-2); margin: 0; }
+
+  .insight-panel {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .eidas-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 700;
+    align-self: flex-start;
+  }
+  .eidas-pill.faible { background: rgba(110,110,118,0.12); color: var(--text-2); }
+  .eidas-pill.substantiel { background: rgba(2,132,199,0.12); color: var(--info); }
+  .eidas-pill.eleve { background: rgba(22,163,74,0.12); color: var(--success); }
+  .eidas-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .eidas-pill.faible .dot { background: var(--text-2); }
+  .eidas-pill.substantiel .dot { background: var(--info); }
+  .eidas-pill.eleve .dot { background: var(--success); }
+  .ref-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ref-badge {
+    padding: 3px 8px; border-radius: 5px;
+    background: var(--shareid-blue-light); color: var(--shareid-blue);
+    font-size: 10px; font-weight: 600;
+  }
+  .insight-disclaimer { font-size: 11px; color: var(--text-3); font-style: italic; border-left: 2px solid var(--warning); padding-left: 10px; }
+
+  .journey-strip { display: flex; gap: 8px; overflow-x: auto; padding: 4px; }
+  .journey-frame { flex: 1; min-width: 150px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column; }
+  .journey-phone { flex: 1; background: linear-gradient(135deg, #1c1c20 0%, #2a2a35 100%); color: white; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; min-height: 220px; }
+  .journey-phone .phone-title { font-size: 13px; font-weight: 700; }
+  .journey-phone .phone-sub { font-size: 11px; opacity: 0.6; }
+  .journey-phone .phone-mock { flex: 1; background: rgba(255,255,255,0.05); border-radius: 8px; display: grid; place-items: center; color: rgba(255,255,255,0.5); font-size: 30px; margin-top: 4px; }
+  .journey-phone .phone-cta { background: var(--journey-primary, var(--shareid-blue)); color: white; padding: 8px 12px; border-radius: 7px; font-size: 11px; font-weight: 600; text-align: center; }
+  .journey-phone .phone-logo { height: 18px; max-width: 80px; object-fit: contain; }
+  .journey-frame-label { padding: 10px 12px; font-size: 12px; font-weight: 700; background: var(--bg-card); border-top: 1px solid var(--border); text-align: center; }
+  .journey-frame-label .step { font-size: 10px; color: var(--text-3); font-weight: 500; }
+  .journey-arrow { display: grid; place-items: center; color: var(--text-3); font-size: 20px; padding: 0 4px; }
+
+  .pack-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; background: var(--bg-card); display: flex; gap: 16px; align-items: flex-start; }
+  .pack-icon { width: 44px; height: 44px; border-radius: 11px; background: var(--shareid-blue-light); color: var(--shareid-blue); display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+  .pack-card.secret .pack-icon { background: rgba(220,38,38,0.10); color: var(--danger); }
+  .pack-card .pack-body { flex: 1; min-width: 0; }
+  .pack-card .pack-title { font-weight: 700; font-size: 15px; }
+  .pack-card .pack-desc { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+  .pack-content { margin-top: 12px; padding: 12px 14px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 8px; font-family: 'SF Mono', Monaco, monospace; font-size: 11px; word-break: break-all; line-height: 1.7; }
+  .pack-content .key { color: var(--text-3); }
+  .pack-actions { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .pack-warning { margin-top: 12px; padding: 10px 14px; background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.25); border-radius: 8px; font-size: 12px; color: var(--danger); font-weight: 500; }
+  .pack-qr { margin-top: 12px; padding: 14px; background: white; border-radius: 10px; display: inline-block; }
+  .pack-qr canvas, .pack-qr img { display: block; }
+
+  .success-banner {
+    background: linear-gradient(135deg, var(--shareid-blue) 0%, #5969d4 100%);
+    color: white; border-radius: var(--radius-md);
+    padding: 28px 32px; text-align: center;
+    box-shadow: var(--shadow-lg);
+  }
+  .success-banner h2 { margin: 0 0 8px; font-size: 22px; font-weight: 800; }
+  .success-banner p { margin: 0; font-size: 14px; opacity: 0.92; }
+
+  .slider-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .slider-card input[type=range] { width: 100%; accent-color: var(--shareid-blue); }
+  .slider-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .slider-key { font-size: 13px; font-weight: 600; }
+  .slider-val { font-size: 22px; font-weight: 800; color: var(--shareid-blue); }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 6px; font-weight: 500; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg-card); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 18px; font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-lg); opacity: 0;
+    transform: translateY(10px); transition: all 250ms;
+    z-index: 200; pointer-events: none;
+    max-width: 360px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.warning { border-left: 3px solid var(--warning); }
+
+  .col { display: flex; flex-direction: column; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .gap-8 { gap: 8px; } .gap-12 { gap: 12px; } .gap-16 { gap: 16px; } .gap-20 { gap: 20px; }
+  .grow { flex: 1; }
+  .muted { color: var(--text-2); }
+  .tiny { font-size: 11px; }
+  .small { font-size: 12px; }
+  .center { text-align: center; }
+  .nowrap { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ==============================================================
+     WELCOME VIEW
+     ============================================================== -->
+<div class="welcome-view active" id="welcomeView">
+  <div class="welcome-card">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div class="col">
+        <div class="brand-name">ShareID Studio</div>
+        <div class="brand-sub">Workflow builder</div>
+      </div>
+    </div>
+    <h1>Bienvenue sur ShareID Studio</h1>
+    <p>Votre compte est prêt. Saisissez votre email pour recevoir un magic-link et accéder à votre dashboard.</p>
+    <div class="input-wrap">
+      <label class="input-label" for="welcomeEmail">Email professionnel</label>
+      <input class="text-input" id="welcomeEmail" type="email" placeholder="vous@entreprise.com" autofocus />
+    </div>
+    <button class="btn primary large full" id="welcomeSubmit">Envoyer le magic-link →</button>
+    <div class="tiny muted center">Démo · aucun email réel envoyé · cliquez pour continuer</div>
+  </div>
+</div>
+
+<!-- ==============================================================
+     DASHBOARD VIEW
+     ============================================================== -->
+<div class="dashboard-view" id="dashboardView">
+  <aside class="dash-sidebar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div class="col">
+        <div class="brand-name">ShareID Studio</div>
+        <div class="brand-sub">Workflow builder</div>
+      </div>
+    </div>
+    <nav class="dash-nav" id="dashNav">
+      <div class="dash-nav-item active" data-section="workflows"><span class="dash-nav-icon">🏠</span> Workflows</div>
+      <div class="dash-nav-item" data-section="reporting"><span class="dash-nav-icon">📊</span> Reporting</div>
+      <div class="dash-nav-item" data-section="onboardings"><span class="dash-nav-icon">📋</span> Onboardings</div>
+      <div class="dash-nav-item" data-section="users"><span class="dash-nav-icon">👥</span> Users</div>
+      <div class="dash-nav-item" data-section="qr"><span class="dash-nav-icon">🔗</span> QR codes</div>
+      <div class="dash-nav-item" data-section="demoapp"><span class="dash-nav-icon">📱</span> Demo app</div>
+      <div class="dash-nav-item" data-section="settings"><span class="dash-nav-icon">⚙</span> Settings</div>
+    </nav>
+    <div class="dash-sidebar-footer">
+      <div>v2 · Demo build</div>
+      <div style="margin-top: 2px;">eIDAS · PVID · ETSI 119461</div>
+    </div>
+  </aside>
+
+  <div class="dash-main">
+    <header class="dash-topbar">
+      <div class="topbar-business">
+        <span>🏢</span>
+        <span id="topbarBusinessName">Atijari Wafa Bank Maroc</span>
+      </div>
+      <span class="grow"></span>
+      <span class="tiny muted nowrap" id="topbarUserEmail"></span>
+      <div class="topbar-avatar" id="topbarAvatar" title="Se déconnecter">SM</div>
+    </header>
+
+    <div class="dash-content">
+
+      <!-- ========= SECTION : WORKFLOWS ========= -->
+      <section class="section-page active" data-section="workflows">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Mes workflows</h1>
+            <p class="section-h1-sub">Gérez vos parcours de vérification d'identité. Un workflow par cas d'usage.</p>
+          </div>
+          <button class="btn primary" id="newWorkflowBtn">+ Nouveau workflow</button>
+        </div>
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <div class="glyph">📋</div>
+          <h3>Aucun workflow pour le moment</h3>
+          <p>Créez votre premier workflow ShareID en quelques minutes.</p>
+          <button class="btn primary" id="createFirstBtn">+ Créer mon premier workflow</button>
+        </div>
+        <div class="workflows-grid" id="workflowsGrid"></div>
+      </section>
+
+      <!-- ========= SECTION : REPORTING ========= -->
+      <section class="section-page" data-section="reporting">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Reporting</h1>
+            <p class="section-h1-sub">Suivi des vérifications, taux de succès, consommation tokens.</p>
+          </div>
+        </div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="reporting-grid">
+          <div class="panel">
+            <h3 class="panel-h">Volume sur 30 jours</h3>
+            <div id="lineChartWrap"></div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-h">Distribution par workflow</h3>
+            <div id="donutWrap"></div>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+        <div class="reporting-grid">
+          <div class="panel">
+            <h3 class="panel-h">Verdicts par étape</h3>
+            <p class="panel-h-sub">Taux de critères validés sur les 30 derniers jours.</p>
+            <div class="verdict-bars" id="verdictBars"></div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-h">Top géographies</h3>
+            <div id="geoList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========= SECTION : ONBOARDINGS ========= -->
+      <section class="section-page" data-section="onboardings">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Onboardings</h1>
+            <p class="section-h1-sub">Toutes les vérifications d'identité réalisées par vos utilisateurs finaux.</p>
+          </div>
+        </div>
+        <div class="filters-row">
+          <select class="filter-select" id="filterPeriod">
+            <option value="30">30 derniers jours</option>
+            <option value="7">7 derniers jours</option>
+            <option value="1">Aujourd'hui</option>
+          </select>
+          <select class="filter-select" id="filterStatus">
+            <option value="">Tous statuts</option>
+            <option value="success">Succès</option>
+            <option value="retry">Retry</option>
+            <option value="fail">Échec</option>
+          </select>
+          <select class="filter-select" id="filterWorkflow">
+            <option value="">Tous workflows</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>Workflow</th>
+                <th>Statut</th>
+                <th>eIDAS</th>
+                <th>Durée</th>
+                <th>Pays</th>
+              </tr>
+            </thead>
+            <tbody id="onboardingsTbody"></tbody>
+          </table>
+          <div class="pagination" id="paginationBar"></div>
+        </div>
+      </section>
+
+      <!-- ========= SECTION : USERS ========= -->
+      <section class="section-page" data-section="users">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Utilisateurs</h1>
+            <p class="section-h1-sub">Membres de votre équipe avec accès au dashboard.</p>
+          </div>
+          <button class="btn primary" id="inviteUserBtn">+ Inviter un utilisateur</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Dernière connexion</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="usersTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========= SECTION : QR CODES ========= -->
+      <section class="section-page" data-section="qr">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">QR codes de test</h1>
+            <p class="section-h1-sub">Générez des QR codes pour tester vos workflows sur device, ou les partager en interne.</p>
+          </div>
+        </div>
+        <div class="qr-grid" id="qrGrid"></div>
+      </section>
+
+      <!-- ========= SECTION : DEMO APP ========= -->
+      <section class="section-page" data-section="demoapp">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">App de démo mobile</h1>
+            <p class="section-h1-sub">Téléchargez l'app ShareID Demo pour tester vos workflows sans intégrer le SDK dans votre app.</p>
+          </div>
+        </div>
+        <div class="demo-app-wrap">
+          <div class="col gap-16">
+            <div class="panel">
+              <h3 class="panel-h">Téléchargements</h3>
+              <div class="col gap-12">
+                <button class="btn full"><span>📱</span> iOS · TestFlight</button>
+                <button class="btn full"><span>🤖</span> Android · APK direct</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-h">Pairing avec votre compte</h3>
+              <p class="panel-h-sub">Scannez ce QR depuis l'app pour synchroniser vos workflows.</p>
+              <div class="pack-qr" id="demoAppQr"></div>
+              <div class="row gap-8" style="margin-top: 12px;">
+                <div class="badge success">● Connecté</div>
+                <span class="tiny muted">Dernière sync : il y a 12 min</span>
+              </div>
+            </div>
+          </div>
+          <div class="demo-app-phone">
+            <div class="da-title">ShareID Demo</div>
+            <div class="da-sub">Vos workflows configurés</div>
+            <div class="da-list" id="daList"></div>
+            <div class="da-cta">Démarrer le test</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========= SECTION : SETTINGS ========= -->
+      <section class="section-page" data-section="settings">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Paramètres</h1>
+            <p class="section-h1-sub">Branding, billing et clés API.</p>
+          </div>
+        </div>
+        <div class="settings-tabs">
+          <div class="settings-tab active" data-settab="branding">Branding</div>
+          <div class="settings-tab" data-settab="billing">Billing</div>
+          <div class="settings-tab" data-settab="api">API keys</div>
+        </div>
+
+        <div class="settings-panel active" data-setpanel="branding">
+          <div class="cards-grid cols-2">
+            <div class="col gap-16">
+              <div class="input-wrap">
+                <label class="input-label" for="settingsLogoUrl">Logo (URL d'image)</label>
+                <input class="text-input" id="settingsLogoUrl" type="text" placeholder="https://votreentreprise.com/logo.png" />
+              </div>
+              <div class="input-wrap">
+                <label class="input-label" for="settingsWelcomeText">Message de bienvenue</label>
+                <input class="text-input" id="settingsWelcomeText" type="text" placeholder="Vérification d'identité" />
+              </div>
+              <div class="color-picker-row">
+                <div class="swatch" id="settingsColorSwatch">
+                  <input type="color" id="settingsPrimaryColor" value="#3B4DBE"/>
+                </div>
+                <div class="body">
+                  <div class="label">Couleur principale</div>
+                  <div class="value-hex" id="settingsColorHex">#3B4DBE</div>
+                </div>
+              </div>
+            </div>
+            <div class="brand-preview">
+              <div class="tiny muted center" style="font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px;">Aperçu en direct</div>
+              <div class="brand-preview-phone" id="settingsBrandPhone">
+                <div class="bp-logo" id="settingsBpLogo"><span>VOTRE LOGO</span></div>
+                <div class="bp-welcome" id="settingsBpWelcome">Vérification d'identité</div>
+                <div class="bp-mock">📄</div>
+                <div class="bp-cta">Commencer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-panel" data-setpanel="billing">
+          <div class="billing-gauge">
+            <div class="head">
+              <div>
+                <div class="num" id="billingUsed">272 000</div>
+                <div class="quota">tokens consommés sur <span id="billingQuota">1 000 000</span> ce mois-ci</div>
+              </div>
+              <div>
+                <button class="btn">Voir les factures</button>
+              </div>
+            </div>
+            <div class="track"><div class="fill" id="billingFill" style="width: 28%"></div></div>
+            <div class="pct" id="billingPct">28% du quota mensuel · cycle 01/04 → 30/04</div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-h">Plan actuel</h3>
+            <div class="row gap-12" style="align-items: flex-start;">
+              <div class="grow">
+                <div style="font-size: 18px; font-weight: 800;">Enterprise</div>
+                <div class="muted small">1 M tokens / mois · webhook prioritaire · support dédié</div>
+              </div>
+              <button class="btn">Modifier le plan</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-panel" data-setpanel="api">
+          <div class="api-key-row">
+            <div class="akr-name">API key (production)</div>
+            <div class="akr-val" id="apiKeyDisplay">sk_live_••••••••••••••••••••••••••••••••</div>
+            <div class="akr-actions">
+              <button class="btn sm">Révéler</button>
+              <button class="btn sm">Régénérer</button>
+              <button class="btn sm">Copier</button>
+            </div>
+          </div>
+          <div class="api-key-row">
+            <div class="akr-name">Webhook signing secret (HMAC)</div>
+            <div class="akr-val">hmac_••••••••••••••••••••••••••••••••••••••</div>
+            <div class="akr-actions">
+              <button class="btn sm">Révéler</button>
+              <button class="btn sm">Régénérer</button>
+            </div>
+          </div>
+          <div class="api-key-row">
+            <div class="akr-name">SDK init key (mobile)</div>
+            <div class="akr-val">app_key_••••••••••••••••</div>
+            <div class="akr-actions">
+              <button class="btn sm">Révéler</button>
+              <button class="btn sm">Régénérer</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ==============================================================
+     WIZARD VIEW (preserved v1)
+     ============================================================== -->
+<div class="wizard-view" id="wizardView">
+  <aside class="wiz-sidebar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div class="col">
+        <div class="brand-name">ShareID Studio</div>
+        <div class="brand-sub">Workflow builder</div>
+      </div>
+    </div>
+    <div class="stepper-section">
+      <span>Création du workflow</span>
+      <span class="stepper-back" id="backToDashboardLink">← Dashboard</span>
+    </div>
+    <div class="stepper" id="stepper"></div>
+    <div class="dash-sidebar-footer">
+      <div>demo2 · Sales Builder</div>
+    </div>
+  </aside>
+  <main class="wiz-main">
+    <div class="stage">
+
+      <!-- STEP 1 -->
+      <section class="step-page" data-step="1">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 1 · Setup</span>
+          <h1 class="step-title">Créons votre nouveau workflow</h1>
+          <p class="step-desc">Donnez-lui un nom et indiquez son type.</p>
+        </div>
+        <div class="input-wrap">
+          <label class="input-label" for="workflowName">Nom du workflow</label>
+          <input class="text-input" id="workflowName" type="text" placeholder="Ex : Atijari Wafa Bank Maroc — Onboarding compte" autofocus />
+          <span class="input-hint">Le nom du client + le cas d'usage.</span>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Type de workflow</h3>
+          <div class="cards-grid cols-2" id="workflowTypeGrid">
+            <button class="choice-card" data-workflow-type="onboarding">
+              <div class="check"></div>
+              <div class="choice-title">Onboarding</div>
+              <div class="choice-sub">Première vérification d'identité (KYC, ouverture de compte).</div>
+            </button>
+            <button class="choice-card" data-workflow-type="authentication">
+              <div class="check"></div>
+              <div class="choice-title">Authentification</div>
+              <div class="choice-sub">Reconnaissance d'un utilisateur déjà enregistré (réauth, signature).</div>
+            </button>
+          </div>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" id="cancelToHome">Annuler</button></div>
+          <div class="right"><button class="btn primary large" id="step1Next" disabled>Continuer →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section class="step-page" data-step="2">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 2 · Niveau de certification</span>
+          <h1 class="step-title">Avez-vous des contraintes réglementaires ?</h1>
+          <p class="step-desc">Choisissez un niveau prédéfini ou configurez chaque étape manuellement.</p>
+        </div>
+        <div class="cards-grid cols-2" id="templateGrid">
+          <button class="choice-card" data-template="eidas-faible">
+            <div class="check"></div>
+            <div class="choice-title">eIDAS Faible</div>
+            <div class="choice-sub">Vérification légère pour services à faible risque.</div>
+          </button>
+          <button class="choice-card" data-template="eidas-substantiel">
+            <span class="ribbon">Recommandé</span>
+            <div class="check"></div>
+            <div class="choice-title">eIDAS Substantiel</div>
+            <div class="choice-sub">Standard du secteur bancaire et fintech.</div>
+          </button>
+          <button class="choice-card" data-template="eidas-eleve">
+            <div class="check"></div>
+            <div class="choice-title">eIDAS Élevé</div>
+            <div class="choice-sub">Niveau d'assurance maximum, certification PVID.</div>
+          </button>
+          <button class="choice-card" data-template="custom">
+            <div class="check"></div>
+            <div class="choice-title">Configuration libre</div>
+            <div class="choice-sub">Configurez chaque étape manuellement.</div>
+          </button>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="1">← Retour</button></div>
+          <div class="right"><button class="btn primary large" id="step2Next" disabled>Configurer le document →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="step-page" data-step="3">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 3 · Document</span>
+          <h1 class="step-title">Comment vérifier le document d'identité ?</h1>
+          <p class="step-desc">Choisissez la méthode de capture principale.</p>
+        </div>
+        <div class="cards-grid cols-2" id="docMethodGrid">
+          <button class="choice-card" data-doc-method="nfc-strict"><div class="check"></div><div class="choice-title">NFC strict</div><div class="choice-sub">Lecture cryptographique du chip uniquement.</div></button>
+          <button class="choice-card" data-doc-method="nfc-fallback"><div class="check"></div><div class="choice-title">NFC + fallback vidéo</div><div class="choice-sub">NFC en priorité, vidéo en secours.</div></button>
+          <button class="choice-card" data-doc-method="video"><div class="check"></div><div class="choice-title">Vidéo seule</div><div class="choice-sub">Capture vidéo guidée du document.</div></button>
+          <button class="choice-card" data-doc-method="photo"><div class="check"></div><div class="choice-title">Photo seule</div><div class="choice-sub">Capture photo simple.</div></button>
+          <button class="choice-card" data-doc-method="eudiw"><div class="check"></div><div class="choice-title">EUDI Wallet</div><div class="choice-sub">Attestation depuis un wallet européen.</div></button>
+        </div>
+        <div class="reveal" id="docOptionsReveal">
+          <div class="section">
+            <h3 class="section-title">Protections supplémentaires</h3>
+            <div class="col gap-8">
+              <label class="option-row" id="docPadRow"><span class="toggle"><input type="checkbox" id="docPadInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Anti-spoofing (PAD) <span class="lock" id="docPadLock"></span></div><div class="desc">Détecte copies imprimées et écrans présentés à la caméra.</div></div></label>
+              <label class="option-row" id="docIadRow"><span class="toggle"><input type="checkbox" id="docIadInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Anti-deepfake (IAD) <span class="lock" id="docIadLock"></span></div><div class="desc">Détecte les vidéos rejouées ou modifiées.</div></div></label>
+              <label class="option-row" id="docChallengesRow"><span class="toggle"><input type="checkbox" id="docChallengesInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Défis aléatoires <span class="lock" id="docChallengesLock"></span></div><div class="desc">Mouvements en temps réel.</div></div></label>
+            </div>
+          </div>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="2">← Retour</button></div>
+          <div class="right"><button class="btn primary large" id="step3Next" disabled>Configurer le visage →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="step-page" data-step="4">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 4 · Visage</span>
+          <h1 class="step-title">Comment vérifier le visage ?</h1>
+          <p class="step-desc">Choisissez la méthode de capture du visage.</p>
+        </div>
+        <div class="cards-grid cols-3" id="faceMethodGrid">
+          <button class="choice-card" data-face-method="photo"><div class="check"></div><div class="choice-title">Photo</div><div class="choice-sub">Capture photo simple.</div></button>
+          <button class="choice-card" data-face-method="video"><div class="check"></div><div class="choice-title">Vidéo</div><div class="choice-sub">Capture vidéo guidée.</div></button>
+          <button class="choice-card" data-face-method="none"><div class="check"></div><div class="choice-title">Aucune</div><div class="choice-sub">Document uniquement.</div></button>
+        </div>
+        <div class="reveal" id="faceOptionsReveal">
+          <div class="section">
+            <h3 class="section-title">Protections supplémentaires</h3>
+            <div class="col gap-8">
+              <label class="option-row" id="facePadRow"><span class="toggle"><input type="checkbox" id="facePadInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Anti-spoofing (PAD) <span class="lock" id="facePadLock"></span></div><div class="desc">Détecte masques, photos imprimées, écrans.</div></div></label>
+              <label class="option-row" id="faceIadRow"><span class="toggle"><input type="checkbox" id="faceIadInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Anti-deepfake (IAD) <span class="lock" id="faceIadLock"></span></div><div class="desc">Détecte injections vidéo et deepfakes.</div></div></label>
+              <label class="option-row" id="faceChallengesRow"><span class="toggle"><input type="checkbox" id="faceChallengesInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Défis aléatoires <span class="lock" id="faceChallengesLock"></span></div><div class="desc">Mouvements guidés en temps réel.</div></div></label>
+            </div>
+          </div>
+          <div class="section" style="margin-top: 16px;">
+            <h3 class="section-title">Ré-authentification future</h3>
+            <label class="option-row" id="reauthRow"><span class="toggle"><input type="checkbox" id="reauthInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Activer la ré-authentification</div><div class="desc">Les utilisateurs pourront se reconnecter via leur visage.</div></div></label>
+          </div>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="3">← Retour</button></div>
+          <div class="right"><button class="btn primary large" id="step4Next" disabled>Configurer la sortie →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 5 -->
+      <section class="step-page" data-step="5">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 5 · Sortie & confidentialité</span>
+          <h1 class="step-title">Que voulez-vous récupérer, et combien de temps ?</h1>
+          <p class="step-desc">Définissez le niveau de détail et la rétention.</p>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Niveau de données OCR</h3>
+          <div class="cards-grid cols-3" id="ocrLevelGrid">
+            <button class="choice-card" data-ocr="minimum"><div class="check"></div><div class="choice-title">Minimum légal</div><div class="choice-sub">Nom, prénom, date de naissance, type de doc.</div></button>
+            <button class="choice-card" data-ocr="standard"><div class="check"></div><div class="choice-title">Standard</div><div class="choice-sub">Minimum + nationalité, MRZ, expiration.</div></button>
+            <button class="choice-card" data-ocr="all"><div class="check"></div><div class="choice-title">Tous les champs</div><div class="choice-sub">Tous les champs du document + chip NFC.</div></button>
+          </div>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Assets bruts</h3>
+          <label class="option-row"><span class="toggle"><input type="checkbox" id="assetsInput"/><span class="track"></span><span class="thumb"></span></span><div class="body"><div class="label">Recevoir les assets (photos + vidéos)</div><div class="desc">Pour audit RGPD ou réconciliation forensique.</div></div></label>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Rétention des données</h3>
+          <div class="slider-card">
+            <div class="slider-row"><span class="slider-key">Durée de rétention</span><span class="slider-val" id="retentionDisplay">90 jours</span></div>
+            <input type="range" id="retentionSlider" min="0" max="4" step="1" value="2" />
+            <div class="slider-labels"><span>24 h</span><span>7 j</span><span>90 j</span><span>1 an</span><span>Illimité</span></div>
+          </div>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Format de sortie</h3>
+          <div class="cards-grid cols-2" id="outputFormatGrid">
+            <button class="choice-card" data-output-format="json"><div class="check"></div><div class="choice-title">JSON standard</div><div class="choice-sub">Champs OCR + verdict eIDAS.</div></button>
+            <button class="choice-card" data-output-format="json-raw"><div class="check"></div><div class="choice-title">JSON étendu</div><div class="choice-sub">Standard + champs bruts.</div></button>
+          </div>
+        </div>
+        <div class="input-wrap">
+          <label class="input-label" for="webhookUrl">Webhook URL (optionnel)</label>
+          <input class="text-input" id="webhookUrl" type="text" placeholder="https://api.votreentreprise.com/shareid/webhook" />
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="4">← Retour</button></div>
+          <div class="right"><button class="btn primary large" id="step5Next">Voir le preview →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 6 -->
+      <section class="step-page" data-step="6">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 6 · Preview</span>
+          <h1 class="step-title">Voici votre parcours utilisateur</h1>
+          <p class="step-desc">C'est ce que vos utilisateurs finaux verront.</p>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Parcours configuré</h3>
+          <div class="journey-strip" id="journeyStrip"></div>
+        </div>
+        <div class="cards-grid cols-2">
+          <div class="insight-panel">
+            <div class="tiny muted" style="font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Niveau de certification</div>
+            <span class="eidas-pill" id="previewEidasPill"><span class="dot"></span><span id="previewEidasLabel">Substantiel</span></span>
+            <div class="tiny muted" style="font-weight: 600; margin-top: 4px;">Référentiels couverts</div>
+            <div class="ref-row" id="previewRefRow"></div>
+            <div class="insight-disclaimer">Estimation indicative — validation par votre Compliance Officer.</div>
+          </div>
+          <div class="insight-panel">
+            <div class="tiny muted" style="font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Récapitulatif RGPD</div>
+            <div class="row" style="justify-content: space-between;"><span class="muted small">OCR</span><span style="font-weight: 600;" id="previewOcr">Standard</span></div>
+            <div class="row" style="justify-content: space-between;"><span class="muted small">Assets bruts</span><span style="font-weight: 600;" id="previewAssets">Non</span></div>
+            <div class="row" style="justify-content: space-between;"><span class="muted small">Rétention</span><span style="font-weight: 600;" id="previewRetention">90 jours</span></div>
+            <div class="row" style="justify-content: space-between;"><span class="muted small">Ré-auth</span><span style="font-weight: 600;" id="previewReauth">Non</span></div>
+          </div>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="5">← Retour</button></div>
+          <div class="right"><button class="btn primary large" id="step6Next">Continuer →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 7 -->
+      <section class="step-page" data-step="7">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 7 · Volume & usage</span>
+          <h1 class="step-title">Quel volume et quel usage attendez-vous ?</h1>
+          <p class="step-desc">Pour dimensionner votre environnement.</p>
+        </div>
+        <div class="section">
+          <div class="slider-card">
+            <div class="slider-row"><span class="slider-key">Volume mensuel estimé</span><span class="slider-val" id="volumeDisplay">100 000</span></div>
+            <input type="range" id="volumeSlider" min="0" max="3" step="1" value="2" />
+            <div class="slider-labels"><span>1 000</span><span>10 000</span><span>100 000</span><span>1 000 000</span></div>
+          </div>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Récurrence</h3>
+          <div class="cards-grid cols-3" id="recurrenceGrid">
+            <button class="choice-card" data-recurrence="one-shot"><div class="check"></div><div class="choice-title">Ponctuel</div><div class="choice-sub">Une vérification unique par utilisateur.</div></button>
+            <button class="choice-card" data-recurrence="recurring"><div class="check"></div><div class="choice-title">Récurrent</div><div class="choice-sub">Les utilisateurs reviennent régulièrement.</div></button>
+            <button class="choice-card" data-recurrence="mixed"><div class="check"></div><div class="choice-title">Mixte</div><div class="choice-sub">Onboarding initial + réauth périodique.</div></button>
+          </div>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Géographie principale</h3>
+          <div class="cards-grid cols-3" id="geoGrid">
+            <button class="choice-card" data-geo="fr"><div class="check"></div><div class="choice-title">France</div><div class="choice-sub">Marché français (PVID éligible).</div></button>
+            <button class="choice-card" data-geo="eu"><div class="check"></div><div class="choice-title">Europe</div><div class="choice-sub">UE — eIDAS 2 + EUDI.</div></button>
+            <button class="choice-card" data-geo="world"><div class="check"></div><div class="choice-title">International</div><div class="choice-sub">Monde entier.</div></button>
+          </div>
+        </div>
+        <div class="insight-panel">
+          <div class="tiny muted" style="font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Estimation</div>
+          <div class="row" style="justify-content: space-between; align-items: baseline;"><span class="muted small">Tokens / vérification</span><span style="font-size: 22px; font-weight: 800; color: var(--shareid-blue);" id="step7Tokens">2.7</span></div>
+          <div class="row" style="justify-content: space-between;"><span class="muted small">Tokens / mois</span><span style="font-weight: 700;" id="step7TokensMonth">270 000</span></div>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="6">← Retour</button></div>
+          <div class="right"><button class="btn primary large" id="step7Next">Personnaliser le branding →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 8 -->
+      <section class="step-page" data-step="8">
+        <div class="step-header">
+          <span class="step-eyebrow">Étape 8 · Branding</span>
+          <h1 class="step-title">Personnalisez l'expérience utilisateur</h1>
+          <p class="step-desc">Vos utilisateurs finaux verront votre marque.</p>
+        </div>
+        <div class="cards-grid cols-2">
+          <div class="col gap-16">
+            <div class="input-wrap">
+              <label class="input-label" for="logoUrl">Logo (URL d'image)</label>
+              <input class="text-input" id="logoUrl" type="text" placeholder="https://votreentreprise.com/logo.png" />
+            </div>
+            <div class="input-wrap">
+              <label class="input-label" for="welcomeText">Message de bienvenue</label>
+              <input class="text-input" id="welcomeText" type="text" placeholder="Vérification d'identité" />
+            </div>
+            <div class="color-picker-row">
+              <div class="swatch" id="colorSwatch"><input type="color" id="primaryColor" value="#3B4DBE"/></div>
+              <div class="body"><div class="label">Couleur principale</div><div class="value-hex" id="colorHex">#3B4DBE</div></div>
+            </div>
+          </div>
+          <div class="brand-preview">
+            <div class="tiny muted center" style="font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px;">Aperçu en direct</div>
+            <div class="brand-preview-phone" id="brandPreviewPhone">
+              <div class="bp-logo" id="bpLogo"><span>VOTRE LOGO</span></div>
+              <div class="bp-welcome" id="bpWelcome">Vérification d'identité</div>
+              <div class="bp-mock">📄</div>
+              <div class="bp-cta">Commencer</div>
+            </div>
+          </div>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="7">← Retour</button></div>
+          <div class="right"><button class="btn primary large" id="step8Next">Générer mon environnement →</button></div>
+        </div>
+      </section>
+
+      <!-- STEP 9 -->
+      <section class="step-page" data-step="9">
+        <div class="success-banner">
+          <h2>🎉 Votre environnement ShareID est prêt</h2>
+          <p>Tout ce qu'il faut pour démarrer : dashboard, SDK, clés API, QR de test.</p>
+        </div>
+        <div class="section">
+          <h3 class="section-title">ShareID Environment Pack</h3>
+          <div class="col gap-12">
+            <div class="pack-card">
+              <div class="pack-icon">🏠</div>
+              <div class="pack-body">
+                <div class="pack-title">Dashboard admin</div>
+                <div class="pack-desc">Suivez les vérifications et la consommation.</div>
+                <div class="pack-content">
+                  <div><span class="key">URL :</span> <span id="envDashUrl"></span></div>
+                  <div><span class="key">Magic-link :</span> <span id="envDashMagic"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="pack-card">
+              <div class="pack-icon">📱</div>
+              <div class="pack-body">
+                <div class="pack-title">Mobile SDK + App de démo</div>
+                <div class="pack-desc">SDK iOS + Android + app de démo pré-configurée.</div>
+                <div class="pack-content">
+                  <div><span class="key">SDK key :</span> <span id="envSdkKey"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="pack-card secret">
+              <div class="pack-icon">🔒</div>
+              <div class="pack-body">
+                <div class="pack-title">API serveur + Webhook</div>
+                <div class="pack-desc">Clés serveur + webhook signé.</div>
+                <div class="pack-content">
+                  <div><span class="key">API key :</span> <span id="envApiKey"></span></div>
+                  <div><span class="key">HMAC secret :</span> <span id="envHmac"></span></div>
+                </div>
+                <div class="pack-warning">⚠ Les secrets ne sont visibles qu'une seule fois.</div>
+              </div>
+            </div>
+            <div class="pack-card">
+              <div class="pack-icon">🔗</div>
+              <div class="pack-body">
+                <div class="pack-title">QR code de test</div>
+                <div class="pack-desc">À scanner sur device pour tester en vrai.</div>
+                <div class="pack-content"><div><span class="key">Démo :</span> <span id="envDemoUrl"></span></div></div>
+                <div class="pack-qr" id="envQr"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stage-footer">
+          <div class="left"><button class="btn ghost" data-go="8">← Modifier</button></div>
+          <div class="right"><button class="btn primary large" id="finishWizard">✓ Terminer</button></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ==============================================================
+     DRAWER · onboarding details
+     ============================================================== -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h2 id="drawerTitle">Détail de l'onboarding</h2>
+    <button class="btn ghost sm" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
+<!-- ==============================================================
+     MODAL · invite user
+     ============================================================== -->
+<div class="modal-overlay" id="inviteModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Inviter un utilisateur</h2>
+      <span class="grow"></span>
+      <button class="btn ghost sm" onclick="closeModal('inviteModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="input-wrap">
+        <label class="input-label" for="inviteEmail">Email</label>
+        <input class="text-input" id="inviteEmail" type="email" placeholder="utilisateur@entreprise.com" />
+      </div>
+      <div class="input-wrap">
+        <label class="input-label" for="inviteRole">Rôle</label>
+        <select class="text-input" id="inviteRole">
+          <option value="admin">Admin — accès complet</option>
+          <option value="configurator">Configurator — créer / modifier les workflows</option>
+          <option value="reader">Reader — lecture seule (Compliance, audit)</option>
+          <option value="tech">Tech delivery — JSON spec + intégration</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('inviteModal')">Annuler</button>
+      <button class="btn primary" id="inviteSend">Envoyer l'invitation</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================================
+   ShareID Studio v2 — Dashboard SaaS
+   ============================================================================ */
+
+const REF_LABELS = {
+  'eIDAS-1': 'eIDAS 1', 'eIDAS-2': 'eIDAS 2',
+  'PVID-v1': 'PVID v1', 'PVID-v2': 'PVID v2',
+  'ETSI-119461': 'ETSI 119461',
+  'AMLD5': 'AMLD5', 'AMLD5-6': 'AMLD5/6', 'AMLR-2024': 'AMLR',
+  'NIS2': 'NIS2', 'RGPD': 'RGPD', 'DSA': 'DSA Art.28',
+  'PSD2-PSD3': 'PSD2/3', 'MiCA': 'MiCA', 'ISO-18013-5': 'ISO 18013-5'
+};
+
+const STEPS = [
+  { num: 1, label: 'Setup', sub: 'Nom & type' },
+  { num: 2, label: 'Niveau', sub: 'Certification' },
+  { num: 3, label: 'Document', sub: 'Méthode' },
+  { num: 4, label: 'Visage', sub: 'Méthode' },
+  { num: 5, label: 'Sortie', sub: 'OCR & RGPD' },
+  { num: 6, label: 'Preview', sub: 'Parcours' },
+  { num: 7, label: 'Volume', sub: 'Usage' },
+  { num: 8, label: 'Branding', sub: 'Logo & couleurs' },
+  { num: 9, label: 'Pack', sub: 'Environnement' }
+];
+
+const VOLUMES = [1000, 10000, 100000, 1000000];
+const RETENTIONS = [
+  { days: 1, label: '24 h' }, { days: 7, label: '7 jours' },
+  { days: 90, label: '90 jours' }, { days: 365, label: '1 an' },
+  { days: -1, label: 'Illimité' }
+];
+
+const newWorkflow = () => ({
+  id: 'wf_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+  name: '', type: null, certif: null,
+  doc: { method: null, pad: false, iad: false, challenges: false },
+  face: { method: null, pad: false, iad: false, challenges: false },
+  reauth: false,
+  output: { format: 'json', ocrLevel: null, assets: false, retention: 90, webhookUrl: '' },
+  volume: { monthly: 100000, recurrence: null, geo: null },
+  branding: { logoUrl: '', primaryColor: '#3B4DBE', welcomeText: 'Vérification d\'identité', mode: 'auto' },
+  status: 'draft',
+  createdAt: null, generatedAt: null, env: null
+});
+
+const state = {
+  view: 'welcome',  // 'welcome' | 'dashboard' | 'wizard'
+  authenticated: false,
+  userEmail: '',
+  business: { name: 'Atijari Wafa Bank Maroc', logoUrl: '', primaryColor: '#3B4DBE',
+    plan: { quota: 1000000, used: 272000 } },
+  section: 'workflows',
+  workflows: [],
+  onboardings: [],
+  users: [],
+  current: null, step: 1,
+  ob: { period: 30, status: '', workflow: '', page: 1, pageSize: 50 }
+};
+
+/* === MOCK DATA GENERATION === */
+function generateMockData() {
+  // 3 workflows
+  state.workflows = [
+    {
+      id: 'wf_atijari_faible', name: 'Atijari Wafa Bank Maroc — Onboarding rapide',
+      type: 'onboarding', certif: 'eidas-faible',
+      doc: { method: 'photo', pad: true, iad: false, challenges: false },
+      face: { method: 'photo', pad: true, iad: false, challenges: false },
+      reauth: false,
+      output: { format: 'json', ocrLevel: 'minimum', assets: false, retention: 30, webhookUrl: 'https://api.attijariwafa.com/shareid/onboarding-rapide' },
+      volume: { monthly: 80000, recurrence: 'recurring', geo: 'world' },
+      branding: { logoUrl: '', primaryColor: '#D4A017', welcomeText: 'Bienvenue chez Atijari', mode: 'auto' },
+      status: 'live', createdAt: '2026-04-10T10:00:00Z', generatedAt: '2026-04-10T11:30:00Z',
+      env: mockEnv('atijari-wafa-bank-maroc-onboarding-rapide')
+    },
+    {
+      id: 'wf_atijari_substantiel', name: 'Atijari Wafa Bank Maroc — Onboarding compte courant',
+      type: 'onboarding', certif: 'eidas-substantiel',
+      doc: { method: 'nfc-fallback', pad: true, iad: true, challenges: false },
+      face: { method: 'video', pad: true, iad: true, challenges: false },
+      reauth: false,
+      output: { format: 'json', ocrLevel: 'standard', assets: false, retention: 90, webhookUrl: 'https://api.attijariwafa.com/shareid/compte-courant' },
+      volume: { monthly: 100000, recurrence: 'recurring', geo: 'world' },
+      branding: { logoUrl: '', primaryColor: '#D4A017', welcomeText: 'Vérification d\'identité', mode: 'auto' },
+      status: 'live', createdAt: '2026-04-15T09:00:00Z', generatedAt: '2026-04-15T10:00:00Z',
+      env: mockEnv('atijari-wafa-bank-maroc-compte-courant')
+    },
+    {
+      id: 'wf_atijari_eleve', name: 'Atijari Wafa Bank Maroc — Onboarding crédit & signature',
+      type: 'onboarding', certif: 'eidas-eleve',
+      doc: { method: 'nfc-strict', pad: false, iad: false, challenges: false },
+      face: { method: 'video', pad: true, iad: true, challenges: true },
+      reauth: true,
+      output: { format: 'json-raw', ocrLevel: 'all', assets: true, retention: 365, webhookUrl: 'https://api.attijariwafa.com/shareid/credit-signature' },
+      volume: { monthly: 50000, recurrence: 'mixed', geo: 'world' },
+      branding: { logoUrl: '', primaryColor: '#D4A017', welcomeText: 'Atijari — Octroi crédit', mode: 'auto' },
+      status: 'live', createdAt: '2026-04-20T14:00:00Z', generatedAt: '2026-04-20T15:00:00Z',
+      env: mockEnv('atijari-wafa-bank-maroc-credit-signature')
+    }
+  ];
+
+  // 4 users
+  state.users = [
+    { id: 'u1', name: 'Sarah Martin', email: 'sarah.martin@atijari.com', role: 'admin', lastSeen: '2026-04-28T10:23:00Z' },
+    { id: 'u2', name: 'Karim Bennani', email: 'karim.bennani@atijari.com', role: 'configurator', lastSeen: '2026-04-28T08:45:00Z' },
+    { id: 'u3', name: 'Diane Roussel', email: 'diane.roussel@atijari.com', role: 'reader', lastSeen: '2026-04-27T16:12:00Z' },
+    { id: 'u4', name: 'Marc Lefèvre', email: 'marc.lefevre@atijari.com', role: 'tech', lastSeen: '2026-04-28T09:30:00Z' }
+  ];
+
+  // 500 onboardings sur 30j
+  state.onboardings = [];
+  const wfIds = [
+    { id: 'wf_atijari_faible', weight: 45, name: 'Atijari — Onboarding rapide' },
+    { id: 'wf_atijari_substantiel', weight: 35, name: 'Atijari — Onboarding compte courant' },
+    { id: 'wf_atijari_eleve', weight: 20, name: 'Atijari — Onboarding crédit & signature' }
+  ];
+  const geos = [
+    { code: 'FR', flag: '🇫🇷', name: 'France', weight: 50 },
+    { code: 'MA', flag: '🇲🇦', name: 'Maroc', weight: 30 },
+    { code: 'BE', flag: '🇧🇪', name: 'Belgique', weight: 7 },
+    { code: 'DE', flag: '🇩🇪', name: 'Allemagne', weight: 7 },
+    { code: 'IT', flag: '🇮🇹', name: 'Italie', weight: 6 }
+  ];
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  for (let i = 0; i < 500; i++) {
+    // Distribution sur 30j avec courbe croissante (plus récent = plus de volume)
+    const dayOffset = Math.floor(Math.pow(Math.random(), 0.7) * 30);
+    const ts = now - dayOffset * dayMs - Math.random() * dayMs;
+    // Pic morning (8-11h) + evening (18-21h)
+    const date = new Date(ts);
+    const hourBias = Math.random();
+    let hour;
+    if (hourBias < 0.45) hour = 8 + Math.floor(Math.random() * 4);
+    else if (hourBias < 0.85) hour = 18 + Math.floor(Math.random() * 4);
+    else hour = Math.floor(Math.random() * 24);
+    date.setHours(hour, Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
+
+    const wf = pickWeighted(wfIds);
+    const geo = pickWeighted(geos);
+    const r = Math.random();
+    let status;
+    if (wf.id === 'wf_atijari_faible') status = r < 0.88 ? 'success' : r < 0.95 ? 'retry' : 'fail';
+    else if (wf.id === 'wf_atijari_substantiel') status = r < 0.92 ? 'success' : r < 0.97 ? 'retry' : 'fail';
+    else status = r < 0.94 ? 'success' : r < 0.98 ? 'retry' : 'fail';
+
+    let eidas;
+    if (wf.id === 'wf_atijari_faible') eidas = 'faible';
+    else if (wf.id === 'wf_atijari_substantiel') eidas = 'substantiel';
+    else eidas = 'eleve';
+
+    state.onboardings.push({
+      id: 'ob_' + i.toString().padStart(4, '0'),
+      timestamp: date.toISOString(),
+      userId: 'usr_' + Math.random().toString(36).slice(2, 10),
+      workflowId: wf.id,
+      workflowName: wf.name,
+      status, eidasLevel: eidas,
+      duration: 8 + Math.floor(Math.random() * 38),  // 8-45s
+      geoCode: geo.code, geoFlag: geo.flag, geoName: geo.name
+    });
+  }
+  // Sort desc
+  state.onboardings.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+}
+
+function pickWeighted(arr) {
+  const total = arr.reduce((s, x) => s + x.weight, 0);
+  let r = Math.random() * total;
+  for (const x of arr) { r -= x.weight; if (r <= 0) return x; }
+  return arr[arr.length - 1];
+}
+
+function mockEnv(slug) {
+  return {
+    apiKey: 'sk_live_' + Math.random().toString(36).slice(2, 14) + Math.random().toString(36).slice(2, 14),
+    apiSecret: 'as_' + Math.random().toString(36).slice(2, 26),
+    sdkKey: 'app_key_' + Math.random().toString(36).slice(2, 14),
+    hmac: 'hmac_' + Math.random().toString(36).slice(2, 26),
+    dashUrl: `https://dashboard.shareid.io/${slug}`,
+    dashMagic: `https://magic.shareid.io/m/${Math.random().toString(36).slice(2, 14)}`,
+    demoUrl: `https://demo.shareid.io/${slug}/${Math.random().toString(36).slice(2, 10)}`
+  };
+}
+
+/* === COMPUTE eIDAS === */
+function compute(w = state.current) {
+  if (!w) return null;
+  const eudiwEnabled = w.doc.method === 'eudiw';
+  const docEnabled = w.doc.method !== null && !eudiwEnabled;
+  const docNfcOnly = w.doc.method === 'nfc-strict';
+  const docIsVideo = w.doc.method === 'video' || w.doc.method === 'nfc-fallback';
+
+  const docPadAvailable = docEnabled && !docNfcOnly;
+  const docIadAvailable = docEnabled && docIsVideo;
+  const docChallengesAvailable = docIadAvailable && w.doc.iad;
+
+  const docPad = docPadAvailable ? w.doc.pad : false;
+  const docIad = docIadAvailable ? w.doc.iad : false;
+  const docChallenges = docChallengesAvailable ? w.doc.challenges : false;
+
+  let faceMethod = w.face.method;
+  if (w.reauth && faceMethod === 'none') faceMethod = 'video';
+  const facePadAvailable = faceMethod === 'photo' || faceMethod === 'video';
+  const faceIadAvailable = faceMethod === 'video';
+  const faceChallengesAvailable = faceMethod === 'video' && w.face.iad;
+  const facePad = facePadAvailable ? w.face.pad : false;
+  const faceIad = faceIadAvailable ? w.face.iad : false;
+  const faceChallenges = faceChallengesAvailable ? w.face.challenges : false;
+
+  let faceLevel = 'F0';
+  if (faceMethod === 'photo' && !facePad) faceLevel = 'F1';
+  else if (faceMethod === 'photo' && facePad) faceLevel = 'F2';
+  else if (faceMethod === 'video' && facePad && !faceChallenges && !faceIad) faceLevel = 'F5';
+  else if (faceMethod === 'video' && facePad && faceChallenges && !faceIad) faceLevel = 'F6';
+  else if (faceMethod === 'video' && facePad && !faceChallenges && faceIad) faceLevel = 'F7';
+  else if (faceMethod === 'video' && facePad && faceChallenges && faceIad) faceLevel = 'F8';
+
+  let eidasLevel = 'faible';
+  let referentials = ['eIDAS-1', 'RGPD'];
+  if (eudiwEnabled) { eidasLevel = 'eleve'; referentials = ['eIDAS-2', 'ETSI-119461', 'ISO-18013-5', 'RGPD']; }
+  else if (docNfcOnly && (faceLevel === 'F7' || faceLevel === 'F8')) { eidasLevel = 'eleve'; referentials = ['eIDAS-1', 'eIDAS-2', 'PVID-v2', 'ISO-18013-5', 'AMLR-2024', 'RGPD']; }
+  else if (w.doc.method === 'nfc-fallback' && faceMethod === 'video' && facePad) { eidasLevel = 'substantiel'; referentials = ['eIDAS-1', 'AMLR-2024', 'PVID-v1', 'AMLD5-6', 'RGPD']; }
+  else if (w.doc.method === 'video' && faceMethod === 'video' && facePad) { eidasLevel = 'substantiel'; referentials = ['eIDAS-1', 'AMLD5-6', 'RGPD']; }
+
+  let tokens = 1;
+  if (eudiwEnabled) tokens = 1.2;
+  else if (w.doc.method === 'nfc-strict') tokens = 2;
+  else if (w.doc.method === 'nfc-fallback') tokens = 1.6;
+  else if (w.doc.method === 'video') tokens = 1.4;
+  if (docPad) tokens += 0.1;
+  if (docIad) tokens += 0.3;
+  if (docChallenges) tokens += 0.2;
+  if (faceMethod === 'video') tokens += 0.5;
+  if (faceIad) tokens += 0.3;
+  if (faceChallenges) tokens += 0.2;
+  if (w.output && w.output.assets) tokens += 0.5;
+  tokens = Math.round(tokens * 10) / 10;
+
+  return {
+    eudiwEnabled, docEnabled, docCapture: docNfcOnly ? 'photo' : (w.doc.method === 'photo' ? 'photo' : 'video'),
+    docNfcOnly, docIsVideo, docPadAvailable, docIadAvailable, docChallengesAvailable,
+    docPad, docIad, docChallenges,
+    faceMethod, facePadAvailable, faceIadAvailable, faceChallengesAvailable,
+    facePad, faceIad, faceChallenges, faceLevel,
+    eidasLevel, referentials, tokens
+  };
+}
+
+const eidasLabel = lvl => lvl === 'eleve' ? 'Élevé' : lvl === 'substantiel' ? 'Substantiel' : 'Faible';
+
+/* === VIEW SWITCHING === */
+function showView(v) {
+  state.view = v;
+  document.getElementById('welcomeView').classList.toggle('active', v === 'welcome');
+  document.getElementById('dashboardView').classList.toggle('active', v === 'dashboard');
+  document.getElementById('wizardView').classList.toggle('active', v === 'wizard');
+  if (v === 'dashboard') renderSection(state.section);
+}
+
+function renderSection(s) {
+  state.section = s;
+  document.querySelectorAll('[data-section]').forEach(el => el.classList.toggle('active', el.dataset.section === s));
+  if (s === 'workflows') renderWorkflows();
+  else if (s === 'reporting') renderReporting();
+  else if (s === 'onboardings') renderOnboardings();
+  else if (s === 'users') renderUsers();
+  else if (s === 'qr') renderQRCodes();
+  else if (s === 'demoapp') renderDemoApp();
+  else if (s === 'settings') renderSettings();
+}
+
+/* === WORKFLOWS section === */
+function renderWorkflows() {
+  const grid = document.getElementById('workflowsGrid');
+  const empty = document.getElementById('emptyState');
+  if (state.workflows.length === 0) {
+    empty.style.display = 'block';
+    grid.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+  grid.innerHTML = state.workflows.map(w => {
+    const c = compute(w);
+    return `<div class="workflow-card" data-workflow-id="${w.id}">
+      <div class="name">${escapeHtml(w.name)}</div>
+      <div class="meta-line">
+        <span>${w.type === 'onboarding' ? 'Onboarding' : 'Authentification'}</span><span class="dot"></span>
+        <span>${formatNum(w.volume.monthly)} / mois</span>
+      </div>
+      <div class="badges">
+        <span class="badge eidas-${c ? c.eidasLevel : 'faible'}">eIDAS ${c ? eidasLabel(c.eidasLevel) : '—'}</span>
+        <span class="badge ${w.status === 'live' ? 'success' : ''}">${w.status === 'live' ? 'Live' : 'Brouillon'}</span>
+      </div>
+      <div class="footer">
+        <button class="btn sm" data-action="open" data-workflow-id="${w.id}">Voir</button>
+        <button class="btn sm danger" data-action="delete" data-workflow-id="${w.id}">Supprimer</button>
+      </div>
+    </div>`;
+  }).join('') + `<div class="new-workflow-card" id="newWorkflowGridBtn">+ Nouveau workflow</div>`;
+
+  grid.querySelectorAll('.workflow-card').forEach(el => {
+    el.addEventListener('click', e => { if (e.target.closest('button')) return; openWorkflow(el.dataset.workflowId); });
+  });
+  grid.querySelectorAll('[data-action="open"]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); openWorkflow(el.dataset.workflowId); }));
+  grid.querySelectorAll('[data-action="delete"]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); deleteWorkflow(el.dataset.workflowId); }));
+  document.getElementById('newWorkflowGridBtn').addEventListener('click', startNewWorkflow);
+}
+
+function startNewWorkflow() {
+  state.current = newWorkflow();
+  state.current.createdAt = new Date().toISOString();
+  state.step = 1;
+  showView('wizard');
+  goToStep(1);
+}
+
+function openWorkflow(id) {
+  const w = state.workflows.find(x => x.id === id);
+  if (!w) return;
+  state.current = JSON.parse(JSON.stringify(w));
+  state.step = 6;
+  showView('wizard');
+  goToStep(6);
+}
+
+function deleteWorkflow(id) {
+  if (!confirm('Supprimer ce workflow ?')) return;
+  state.workflows = state.workflows.filter(w => w.id !== id);
+  renderWorkflows();
+  showToast('✓ Workflow supprimé', 'success');
+}
+
+/* === REPORTING section === */
+function renderReporting() {
+  const total = state.onboardings.length;
+  const success = state.onboardings.filter(o => o.status === 'success').length;
+  const successRate = ((success / total) * 100).toFixed(1);
+  const avgDuration = (state.onboardings.reduce((s, o) => s + o.duration, 0) / total).toFixed(0);
+
+  // KPIs
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Volume du mois</div><div class="kpi-value">${formatNum(total)}</div><div class="kpi-trend">↑ +12% vs mois dernier</div></div>
+    <div class="kpi-card"><div class="kpi-label">Taux de succès</div><div class="kpi-value">${successRate}%</div><div class="kpi-trend">↑ +0.4 pt</div></div>
+    <div class="kpi-card"><div class="kpi-label">Tokens consommés</div><div class="kpi-value">${formatNum(state.business.plan.used)}</div><div class="kpi-trend">28% du quota</div></div>
+    <div class="kpi-card"><div class="kpi-label">Latence moyenne</div><div class="kpi-value">${avgDuration}s</div><div class="kpi-trend">↓ -2s</div></div>
+  `;
+
+  // Line chart (volume sur 30j)
+  const dailyCounts = new Array(30).fill(0);
+  const now = Date.now(); const dayMs = 24*3600*1000;
+  state.onboardings.forEach(o => {
+    const d = Math.floor((now - new Date(o.timestamp).getTime()) / dayMs);
+    if (d >= 0 && d < 30) dailyCounts[29 - d]++;
+  });
+  const max = Math.max(...dailyCounts) || 1;
+  const w = 600, h = 200, pad = 28;
+  const xStep = (w - pad * 2) / 29;
+  const points = dailyCounts.map((v, i) => `${pad + i * xStep},${h - pad - (v / max) * (h - pad * 2)}`).join(' ');
+  const polyPath = `M${points.split(' ').join(' L')}`;
+  const areaPath = polyPath + ` L${pad + 29 * xStep},${h - pad} L${pad},${h - pad} Z`;
+  document.getElementById('lineChartWrap').innerHTML = `
+    <svg class="chart-line" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      <line class="grid" x1="${pad}" y1="${h - pad}" x2="${w - pad}" y2="${h - pad}"/>
+      <line class="grid" x1="${pad}" y1="${pad}" x2="${pad}" y2="${h - pad}"/>
+      <path class="data-area" d="${areaPath}"/>
+      <path class="data-line" d="${polyPath}"/>
+      ${dailyCounts.map((v, i) => `<circle class="data-dot" cx="${pad + i * xStep}" cy="${h - pad - (v / max) * (h - pad * 2)}" r="2.5"/>`).join('')}
+      <text class="axis-label" x="${pad}" y="${h - 8}">il y a 30j</text>
+      <text class="axis-label" x="${w - pad}" y="${h - 8}" text-anchor="end">aujourd'hui</text>
+      <text class="axis-label" x="${pad - 4}" y="${pad + 6}" text-anchor="end">${max}</text>
+    </svg>`;
+
+  // Donut chart (workflow distribution)
+  const wfCounts = {};
+  state.onboardings.forEach(o => { wfCounts[o.workflowId] = (wfCounts[o.workflowId] || 0) + 1; });
+  const colors = ['#3B4DBE', '#16a34a', '#d97706', '#0284c7', '#dc2626'];
+  const totalWf = Object.values(wfCounts).reduce((s, x) => s + x, 0) || 1;
+  const radius = 60, circ = 2 * Math.PI * radius;
+  let offset = 0;
+  const segs = Object.entries(wfCounts).map(([id, count], i) => {
+    const pct = count / totalWf;
+    const len = pct * circ;
+    const wf = state.workflows.find(w => w.id === id);
+    const seg = `<circle class="ring" cx="100" cy="100" r="${radius}" stroke="${colors[i % colors.length]}" stroke-dasharray="${len} ${circ}" stroke-dashoffset="${-offset}" transform="rotate(-90 100 100)"/>`;
+    const item = { name: wf ? wf.name : id, count, pct, color: colors[i % colors.length] };
+    offset += len;
+    return { seg, item };
+  });
+  document.getElementById('donutWrap').innerHTML = `
+    <svg class="chart-donut" viewBox="0 0 200 200">
+      <circle class="ring" cx="100" cy="100" r="${radius}" stroke="${getCss('--bg-subtle')}"/>
+      ${segs.map(s => s.seg).join('')}
+      <text x="100" y="96" text-anchor="middle" font-size="20" font-weight="800" fill="${getCss('--text')}">${formatNum(totalWf)}</text>
+      <text x="100" y="116" text-anchor="middle" font-size="11" fill="${getCss('--text-3')}">vérifications</text>
+    </svg>`;
+  document.getElementById('donutLegend').innerHTML = segs.map(s =>
+    `<div class="donut-legend-item"><span class="swatch" style="background:${s.item.color}"></span><span class="grow">${escapeHtml(s.item.name)}</span><span class="muted">${(s.item.pct * 100).toFixed(0)}%</span></div>`
+  ).join('');
+
+  // Verdict bars
+  const successPct = (success / total) * 100;
+  const retryCount = state.onboardings.filter(o => o.status === 'retry').length;
+  const failCount = state.onboardings.filter(o => o.status === 'fail').length;
+  document.getElementById('verdictBars').innerHTML = `
+    <div class="verdict-bar"><div class="head"><span>Authentique</span><span>${successPct.toFixed(1)}%</span></div><div class="track"><div class="fill-green" style="width: ${successPct}%"></div></div></div>
+    <div class="verdict-bar"><div class="head"><span>Valide</span><span>${(((success + retryCount) / total) * 100).toFixed(1)}%</span></div><div class="track"><div class="fill-green" style="width: ${((success + retryCount) / total) * 100}%"></div></div></div>
+    <div class="verdict-bar"><div class="head"><span>Cohérent</span><span>${(((total - failCount) / total) * 100).toFixed(1)}%</span></div><div class="track"><div class="fill-orange" style="width: ${((total - failCount) / total) * 100}%"></div></div></div>
+  `;
+
+  // Geo
+  const geos = {};
+  state.onboardings.forEach(o => { geos[o.geoCode] = (geos[o.geoCode] || { count: 0, name: o.geoName, flag: o.geoFlag }); geos[o.geoCode].count++; });
+  const sorted = Object.entries(geos).sort((a, b) => b[1].count - a[1].count).slice(0, 5);
+  document.getElementById('geoList').innerHTML = sorted.map(([code, d]) =>
+    `<div class="geo-row"><span class="flag">${d.flag}</span><span class="country">${d.name}</span><span class="pct">${((d.count / total) * 100).toFixed(0)}% · ${formatNum(d.count)}</span></div>`
+  ).join('');
+}
+
+/* === ONBOARDINGS section === */
+function renderOnboardings() {
+  // Populate workflow filter
+  const fwSelect = document.getElementById('filterWorkflow');
+  if (fwSelect.options.length <= 1) {
+    state.workflows.forEach(w => {
+      const opt = document.createElement('option');
+      opt.value = w.id; opt.textContent = w.name;
+      fwSelect.appendChild(opt);
+    });
+  }
+  // Apply filters
+  const now = Date.now();
+  const periodDays = parseInt(state.ob.period);
+  const filtered = state.onboardings.filter(o => {
+    const ageDays = (now - new Date(o.timestamp).getTime()) / (24*3600*1000);
+    if (ageDays > periodDays) return false;
+    if (state.ob.status && o.status !== state.ob.status) return false;
+    if (state.ob.workflow && o.workflowId !== state.ob.workflow) return false;
+    return true;
+  });
+  // Pagination
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / state.ob.pageSize));
+  const page = Math.min(state.ob.page, totalPages);
+  const start = (page - 1) * state.ob.pageSize;
+  const items = filtered.slice(start, start + state.ob.pageSize);
+  // Render
+  document.getElementById('onboardingsTbody').innerHTML = items.map(o => `
+    <tr class="clickable" data-onboarding-id="${o.id}">
+      <td>${formatDate(o.timestamp)}</td>
+      <td><code style="font-size: 11px;">${escapeHtml(o.userId)}</code></td>
+      <td>${escapeHtml(o.workflowName)}</td>
+      <td><span class="badge ${o.status === 'success' ? 'success' : o.status === 'retry' ? 'warning' : 'danger'}">${o.status === 'success' ? 'Succès' : o.status === 'retry' ? 'Retry' : 'Échec'}</span></td>
+      <td><span class="badge eidas-${o.eidasLevel}">${eidasLabel(o.eidasLevel)}</span></td>
+      <td>${o.duration}s</td>
+      <td>${o.geoFlag} ${o.geoCode}</td>
+    </tr>
+  `).join('');
+  document.getElementById('paginationBar').innerHTML = `
+    <span>${formatNum(total)} résultats · page ${page} / ${totalPages}</span>
+    <div class="row gap-8">
+      <button class="btn sm" ${page <= 1 ? 'disabled' : ''} onclick="changePage(${page - 1})">← Précédent</button>
+      <button class="btn sm" ${page >= totalPages ? 'disabled' : ''} onclick="changePage(${page + 1})">Suivant →</button>
+    </div>
+  `;
+  // Bind row click
+  document.querySelectorAll('[data-onboarding-id]').forEach(tr =>
+    tr.addEventListener('click', () => openOnboardingDrawer(tr.dataset.onboardingId)));
+}
+
+function changePage(n) { state.ob.page = n; renderOnboardings(); }
+
+function openOnboardingDrawer(id) {
+  const o = state.onboardings.find(x => x.id === id);
+  if (!o) return;
+  document.getElementById('drawerTitle').textContent = o.id;
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="row gap-8">
+      <span class="badge ${o.status === 'success' ? 'success' : o.status === 'retry' ? 'warning' : 'danger'}">${o.status === 'success' ? 'Succès' : o.status === 'retry' ? 'Retry' : 'Échec'}</span>
+      <span class="badge eidas-${o.eidasLevel}">eIDAS ${eidasLabel(o.eidasLevel)}</span>
+    </div>
+    <div class="col gap-8">
+      <div><strong>Workflow :</strong> ${escapeHtml(o.workflowName)}</div>
+      <div><strong>User ID :</strong> <code>${o.userId}</code></div>
+      <div><strong>Date :</strong> ${formatDate(o.timestamp)}</div>
+      <div><strong>Durée :</strong> ${o.duration}s</div>
+      <div><strong>Pays :</strong> ${o.geoFlag} ${o.geoName}</div>
+    </div>
+    <div class="verdict-step">
+      <div class="step-name">Document</div>
+      <div class="verdict-criteria">
+        <span class="badge ${o.status !== 'fail' ? 'success' : 'danger'}">Authentique</span>
+        <span class="badge success">Valide</span>
+        <span class="badge ${o.status === 'success' ? 'success' : 'warning'}">Cohérent</span>
+      </div>
+    </div>
+    <div class="verdict-step">
+      <div class="step-name">Visage</div>
+      <div class="verdict-criteria">
+        <span class="badge success">Détecté</span>
+        <span class="badge ${o.status !== 'fail' ? 'success' : 'danger'}">Liveness</span>
+        <span class="badge ${o.status === 'success' ? 'success' : 'warning'}">Encoding</span>
+      </div>
+    </div>
+    <div class="verdict-step">
+      <div class="step-name">Output</div>
+      <div class="verdict-criteria">
+        <span class="badge success">Généré</span>
+        <span class="badge success">Délivré</span>
+        <span class="badge success">Confirmé</span>
+      </div>
+    </div>
+    <div>
+      <div class="muted small" style="font-weight: 600; margin-bottom: 6px;">JSON brut</div>
+      <div class="json-block">${JSON.stringify({
+        id: o.id, timestamp: o.timestamp, workflow_id: o.workflowId,
+        user_id: o.userId, status: o.status, eidas_level: o.eidasLevel,
+        duration_sec: o.duration, geo: { code: o.geoCode, name: o.geoName },
+        verdicts: { document: { authentic: o.status !== 'fail', valid: true, coherent: o.status === 'success' }, face: { detected: true, liveness: o.status !== 'fail', encoding: o.status === 'success' }, output: { generated: true, delivered: true, confirmed: true } }
+      }, null, 2)}</div>
+    </div>
+    <div class="row gap-8"><button class="btn sm">Lien vidéo</button><button class="btn sm">Renvoyer webhook</button></div>
+  `;
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+/* === USERS section === */
+function renderUsers() {
+  const roleLabels = { admin: 'Admin', configurator: 'Configurator', reader: 'Reader (Compliance)', tech: 'Tech delivery' };
+  document.getElementById('usersTbody').innerHTML = state.users.map(u => `
+    <tr>
+      <td><strong>${escapeHtml(u.name)}</strong></td>
+      <td><code style="font-size: 11px;">${escapeHtml(u.email)}</code></td>
+      <td><span class="badge info">${roleLabels[u.role]}</span></td>
+      <td>${formatRelative(u.lastSeen)}</td>
+      <td><button class="btn sm">Modifier</button></td>
+    </tr>`).join('');
+}
+
+/* === QR CODES section === */
+function renderQRCodes() {
+  const grid = document.getElementById('qrGrid');
+  grid.innerHTML = state.workflows.map(w => `
+    <div class="qr-card">
+      <div class="qr-name">${escapeHtml(w.name)}</div>
+      <div class="qr-img-wrap" id="qrImg_${w.id}"></div>
+      <div class="muted tiny center">Expire dans 30 jours · 12 scans</div>
+      <div class="row gap-8">
+        <button class="btn sm grow" onclick="copyText('${w.env.demoUrl}', 'Lien démo')">Copier le lien</button>
+        <button class="btn sm" onclick="regenWorkflowQR('${w.id}')">↻</button>
+      </div>
+    </div>`).join('');
+  // Render QRs
+  setTimeout(() => state.workflows.forEach(w => renderQR(document.getElementById('qrImg_' + w.id), w.env.demoUrl, 160)), 100);
+}
+
+function regenWorkflowQR(id) {
+  const w = state.workflows.find(x => x.id === id);
+  if (!w) return;
+  w.env.demoUrl = `https://demo.shareid.io/${id}/${Math.random().toString(36).slice(2, 12)}`;
+  renderQR(document.getElementById('qrImg_' + id), w.env.demoUrl, 160);
+  showToast('✓ Nouveau QR généré', 'success');
+}
+
+/* === DEMO APP section === */
+function renderDemoApp() {
+  document.getElementById('daList').innerHTML = state.workflows.map(w =>
+    `<div class="da-wf"><div class="nm">${escapeHtml(w.name.split(' — ')[0] || w.name)}</div><div class="st">eIDAS ${eidasLabel(compute(w).eidasLevel)} · ${w.status === 'live' ? 'Actif' : 'Brouillon'}</div></div>`
+  ).join('');
+  setTimeout(() => renderQR(document.getElementById('demoAppQr'), `https://app.shareid.io/pair/${state.business.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`, 160), 100);
+}
+
+/* === SETTINGS section === */
+function renderSettings() {
+  // Branding inputs
+  document.getElementById('settingsLogoUrl').value = state.business.logoUrl;
+  document.getElementById('settingsWelcomeText').value = 'Vérification d\'identité';
+  document.getElementById('settingsPrimaryColor').value = state.business.primaryColor;
+  document.getElementById('settingsColorHex').textContent = state.business.primaryColor;
+  document.getElementById('settingsColorSwatch').style.background = state.business.primaryColor;
+  updateSettingsPreview();
+  // Billing
+  const pct = (state.business.plan.used / state.business.plan.quota) * 100;
+  document.getElementById('billingFill').style.width = pct + '%';
+  document.getElementById('billingPct').textContent = `${pct.toFixed(0)}% du quota mensuel · cycle 01/04 → 30/04`;
+  document.getElementById('billingUsed').textContent = formatNum(state.business.plan.used);
+  document.getElementById('billingQuota').textContent = formatNum(state.business.plan.quota);
+}
+
+function updateSettingsPreview() {
+  const phone = document.getElementById('settingsBrandPhone');
+  phone.style.setProperty('--brand-primary', state.business.primaryColor);
+  document.getElementById('settingsBpWelcome').textContent = document.getElementById('settingsWelcomeText').value || 'Vérification d\'identité';
+  const logo = document.getElementById('settingsBpLogo');
+  if (state.business.logoUrl) logo.innerHTML = `<img src="${escapeHtml(state.business.logoUrl)}" onerror="this.parentElement.innerHTML='<span>VOTRE LOGO</span>'"/>`;
+  else logo.innerHTML = '<span>VOTRE LOGO</span>';
+}
+
+/* === STEPPER (wizard) === */
+function renderStepper() {
+  const root = document.getElementById('stepper');
+  root.innerHTML = STEPS.map(s => {
+    const status = s.num < state.step ? 'done' : s.num === state.step ? 'active' : (canReachStep(s.num) ? '' : 'locked');
+    return `<div class="step-item ${status}" data-step="${s.num}"><div class="step-num"><span>${s.num}</span></div><div class="step-body"><div class="step-label">${s.label}</div><div class="step-sub">${s.sub}</div></div></div>`;
+  }).join('');
+  root.querySelectorAll('.step-item').forEach(el =>
+    el.addEventListener('click', () => { const n = parseInt(el.dataset.step); if (canReachStep(n)) goToStep(n); }));
+}
+
+function canReachStep(n) {
+  const w = state.current;
+  if (!w) return n === 1;
+  if (n <= state.step) return true;
+  if (n === 2) return !!w.name.trim() && !!w.type;
+  if (n === 3) return !!w.certif;
+  if (n === 4) return !!w.doc.method;
+  if (n === 5) return !!w.face.method;
+  if (n === 6) return !!w.output.ocrLevel && !!w.output.format;
+  if (n === 7) return state.step >= 6;
+  if (n === 8) return !!w.volume.recurrence && !!w.volume.geo;
+  if (n === 9) return state.step >= 9;
+  return false;
+}
+
+function goToStep(n) {
+  state.step = n;
+  document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
+  const el = document.querySelector(`.step-page[data-step="${n}"]`);
+  if (el) el.classList.add('active');
+  renderStepper();
+  const fns = [null, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, renderStep6, renderStep7, renderStep8, renderStep9];
+  if (fns[n]) fns[n]();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderStep1() {
+  const w = state.current;
+  document.getElementById('workflowName').value = w.name;
+  document.querySelectorAll('[data-workflow-type]').forEach(el => el.classList.toggle('active', el.dataset.workflowType === w.type));
+  document.getElementById('step1Next').disabled = !w.name.trim() || !w.type;
+}
+function renderStep2() {
+  document.querySelectorAll('[data-template]').forEach(el => el.classList.toggle('active', el.dataset.template === state.current.certif));
+  document.getElementById('step2Next').disabled = !state.current.certif;
+}
+function applyTemplate(t) {
+  const w = state.current;
+  w.certif = t;
+  if (t === 'eidas-faible') { w.doc = { method: 'photo', pad: true, iad: false, challenges: false }; w.face = { method: 'photo', pad: true, iad: false, challenges: false }; }
+  else if (t === 'eidas-substantiel') { w.doc = { method: 'nfc-fallback', pad: true, iad: true, challenges: false }; w.face = { method: 'video', pad: true, iad: true, challenges: false }; }
+  else if (t === 'eidas-eleve') { w.doc = { method: 'nfc-strict', pad: false, iad: false, challenges: false }; w.face = { method: 'video', pad: true, iad: true, challenges: true }; }
+  else { w.doc = { method: null, pad: false, iad: false, challenges: false }; w.face = { method: null, pad: false, iad: false, challenges: false }; }
+  if (!w.output.ocrLevel) w.output.ocrLevel = 'standard';
+}
+
+function renderStep3() {
+  const w = state.current; const c = compute(w);
+  document.querySelectorAll('[data-doc-method]').forEach(el => el.classList.toggle('active', el.dataset.docMethod === w.doc.method));
+  document.getElementById('docOptionsReveal').classList.toggle('shown', w.doc.method && w.doc.method !== 'eudiw');
+  setOption('docPad', c.docPadAvailable, c.docPad, w.doc.pad, w.doc.method === 'nfc-strict' ? '— intégré au NFC' : (w.doc.method === 'eudiw' ? '— intégré au wallet' : ''));
+  setOption('docIad', c.docIadAvailable, c.docIad, w.doc.iad, w.doc.method === 'photo' ? '— requiert vidéo' : (w.doc.method === 'nfc-strict' ? '— intégré au NFC' : ''));
+  setOption('docChallenges', c.docChallengesAvailable, c.docChallenges, w.doc.challenges, !c.docIadAvailable ? '— requiert vidéo' : (!w.doc.iad ? '— activer anti-deepfake d\'abord' : ''));
+  document.getElementById('step3Next').disabled = !w.doc.method;
+}
+
+function setOption(id, avail, computed, raw, lockMsg) {
+  const row = document.getElementById(id + 'Row');
+  if (row) { row.classList.toggle('disabled', !avail); row.classList.toggle('active', avail && raw); }
+  const inp = document.getElementById(id + 'Input');
+  if (inp) { inp.checked = computed; inp.disabled = !avail; }
+  const lock = document.getElementById(id + 'Lock');
+  if (lock) lock.textContent = !avail ? lockMsg : '';
+}
+
+function renderStep4() {
+  const w = state.current; const c = compute(w);
+  document.querySelectorAll('[data-face-method]').forEach(el => el.classList.toggle('active', el.dataset.faceMethod === w.face.method));
+  document.getElementById('faceOptionsReveal').classList.toggle('shown', w.face.method !== null);
+  setOption('facePad', c.facePadAvailable, c.facePad, w.face.pad, '— pas de capture');
+  setOption('faceIad', c.faceIadAvailable, c.faceIad, w.face.iad, w.face.method === 'photo' ? '— requiert vidéo' : '— pas de capture');
+  setOption('faceChallenges', c.faceChallengesAvailable, c.faceChallenges, w.face.challenges, w.face.method !== 'video' ? '— requiert vidéo' : (!w.face.iad ? '— activer anti-deepfake d\'abord' : ''));
+  document.getElementById('reauthInput').checked = w.reauth;
+  document.getElementById('reauthRow').classList.toggle('active', w.reauth);
+  document.getElementById('step4Next').disabled = !w.face.method;
+}
+
+function renderStep5() {
+  const w = state.current;
+  document.querySelectorAll('[data-ocr]').forEach(el => el.classList.toggle('active', el.dataset.ocr === w.output.ocrLevel));
+  document.querySelectorAll('[data-output-format]').forEach(el => el.classList.toggle('active', el.dataset.outputFormat === w.output.format));
+  document.getElementById('assetsInput').checked = w.output.assets;
+  document.getElementById('webhookUrl').value = w.output.webhookUrl;
+  const idx = RETENTIONS.findIndex(r => r.days === w.output.retention);
+  const i = idx >= 0 ? idx : 2;
+  document.getElementById('retentionSlider').value = i;
+  document.getElementById('retentionDisplay').textContent = RETENTIONS[i].label;
+}
+
+function renderStep6() {
+  const w = state.current; const c = compute(w);
+  const pill = document.getElementById('previewEidasPill');
+  pill.classList.remove('faible', 'substantiel', 'eleve');
+  pill.classList.add(c.eidasLevel);
+  document.getElementById('previewEidasLabel').textContent = 'eIDAS ' + eidasLabel(c.eidasLevel);
+  document.getElementById('previewRefRow').innerHTML = c.referentials.map(r => `<span class="ref-badge">${REF_LABELS[r] || r}</span>`).join('');
+  const ocrLabels = { minimum: 'Minimum légal', standard: 'Standard', all: 'Tous les champs' };
+  document.getElementById('previewOcr').textContent = ocrLabels[w.output.ocrLevel] || '—';
+  document.getElementById('previewAssets').textContent = w.output.assets ? 'Oui' : 'Non';
+  const ret = RETENTIONS.find(r => r.days === w.output.retention);
+  document.getElementById('previewRetention').textContent = ret ? ret.label : '—';
+  document.getElementById('previewReauth').textContent = w.reauth ? 'Oui' : 'Non';
+  renderJourney(c);
+}
+
+function renderJourney(c) {
+  const w = state.current;
+  const root = document.getElementById('journeyStrip');
+  const primary = w.branding.primaryColor || '#3B4DBE';
+  root.style.setProperty('--journey-primary', primary);
+  const frames = [];
+  if (c.eudiwEnabled) frames.push({ title: 'Présenter votre identité', sub: 'EUDI Wallet', mock: '🆔', cta: 'Ouvrir mon wallet', label: 'Wallet' });
+  else if (c.docEnabled) {
+    if (c.docNfcOnly) frames.push({ title: 'Lecture NFC', sub: 'Approcher du téléphone', mock: '📡', cta: 'Approcher', label: 'Document' });
+    else if (w.doc.method === 'photo') frames.push({ title: 'Photo du document', sub: 'Cadrer et capturer', mock: '📄', cta: 'Capturer', label: 'Document' });
+    else frames.push({ title: 'Filmer le document', sub: 'Suivre les indications', mock: '📄', cta: 'Démarrer', label: 'Document' });
+  }
+  if (c.faceMethod !== 'none') {
+    if (c.faceChallenges) frames.push({ title: 'Filmer votre visage', sub: 'Suivre les défis', mock: '😊', cta: 'Démarrer', label: 'Visage' });
+    else if (c.faceMethod === 'video') frames.push({ title: 'Filmer votre visage', sub: 'Vidéo guidée', mock: '👤', cta: 'Démarrer', label: 'Visage' });
+    else frames.push({ title: 'Photo du visage', sub: 'Regarder l\'objectif', mock: '👤', cta: 'Capturer', label: 'Visage' });
+  }
+  frames.push({ title: 'Vérification terminée', sub: 'Résultat envoyé', mock: '✓', cta: 'eIDAS ' + eidasLabel(c.eidasLevel) + ' validé', label: 'Résultat' });
+  root.innerHTML = frames.map((f, i) => {
+    const arrow = i < frames.length - 1 ? '<div class="journey-arrow">→</div>' : '';
+    return `<div class="journey-frame"><div class="journey-phone"><div class="phone-title">${f.title}</div><div class="phone-sub">${f.sub}</div><div class="phone-mock">${f.mock}</div><div class="phone-cta">${f.cta}</div></div><div class="journey-frame-label"><div class="step">Étape ${i + 1}/${frames.length}</div>${f.label}</div></div>${arrow}`;
+  }).join('');
+}
+
+function renderStep7() {
+  const w = state.current; const c = compute(w);
+  document.getElementById('volumeSlider').value = VOLUMES.indexOf(w.volume.monthly) >= 0 ? VOLUMES.indexOf(w.volume.monthly) : 2;
+  document.getElementById('volumeDisplay').textContent = formatNum(w.volume.monthly);
+  document.querySelectorAll('[data-recurrence]').forEach(el => el.classList.toggle('active', el.dataset.recurrence === w.volume.recurrence));
+  document.querySelectorAll('[data-geo]').forEach(el => el.classList.toggle('active', el.dataset.geo === w.volume.geo));
+  document.getElementById('step7Tokens').textContent = c.tokens.toFixed(1);
+  document.getElementById('step7TokensMonth').textContent = formatNum(Math.round(w.volume.monthly * c.tokens));
+  document.getElementById('step7Next').disabled = !w.volume.recurrence || !w.volume.geo;
+}
+
+function renderStep8() {
+  const w = state.current;
+  document.getElementById('logoUrl').value = w.branding.logoUrl;
+  document.getElementById('welcomeText').value = w.branding.welcomeText || 'Vérification d\'identité';
+  document.getElementById('primaryColor').value = w.branding.primaryColor || '#3B4DBE';
+  document.getElementById('colorHex').textContent = w.branding.primaryColor || '#3B4DBE';
+  document.getElementById('colorSwatch').style.background = w.branding.primaryColor || '#3B4DBE';
+  const phone = document.getElementById('brandPreviewPhone');
+  phone.style.setProperty('--brand-primary', w.branding.primaryColor || '#3B4DBE');
+  document.getElementById('bpWelcome').textContent = w.branding.welcomeText || 'Vérification d\'identité';
+  const bpLogo = document.getElementById('bpLogo');
+  if (w.branding.logoUrl) bpLogo.innerHTML = `<img src="${escapeHtml(w.branding.logoUrl)}" onerror="this.parentElement.innerHTML='<span>VOTRE LOGO</span>'"/>`;
+  else bpLogo.innerHTML = '<span>VOTRE LOGO</span>';
+}
+
+function renderStep9() {
+  const w = state.current;
+  if (!w.env) generatePack();
+}
+
+function generatePack() {
+  const w = state.current;
+  const slug = (w.name || 'workflow').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').substr(0, 40);
+  w.env = mockEnv(slug);
+  w.status = 'live';
+  w.generatedAt = new Date().toISOString();
+  document.getElementById('envDashUrl').textContent = w.env.dashUrl;
+  document.getElementById('envDashMagic').textContent = w.env.dashMagic;
+  document.getElementById('envSdkKey').textContent = w.env.sdkKey;
+  document.getElementById('envApiKey').textContent = w.env.apiKey;
+  document.getElementById('envHmac').textContent = w.env.hmac;
+  document.getElementById('envDemoUrl').textContent = w.env.demoUrl;
+  renderQR(document.getElementById('envQr'), w.env.demoUrl, 200);
+}
+
+/* === QR helpers === */
+function renderQR(el, url, size) {
+  if (!el) return;
+  el.innerHTML = '';
+  if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
+    QRCode.toCanvas(url, { width: size, margin: 1 }, (err, canvas) => {
+      if (!err) el.appendChild(canvas);
+      else fallbackQR(el, url, size);
+    });
+  } else fallbackQR(el, url, size);
+}
+function fallbackQR(el, url, size) {
+  const img = document.createElement('img');
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=4&data=${encodeURIComponent(url)}`;
+  img.alt = 'QR'; img.width = size; img.height = size; img.style.display = 'block';
+  el.appendChild(img);
+}
+
+/* === EVENTS === */
+function bindEvents() {
+  // Welcome
+  document.getElementById('welcomeSubmit').addEventListener('click', () => {
+    const email = document.getElementById('welcomeEmail').value.trim();
+    if (!email || !email.includes('@')) { showToast('⚠ Saisissez un email valide', 'warning'); return; }
+    state.userEmail = email;
+    state.authenticated = true;
+    document.getElementById('topbarUserEmail').textContent = email;
+    document.getElementById('topbarAvatar').textContent = email[0].toUpperCase();
+    document.getElementById('welcomeSubmit').textContent = 'Connexion en cours…';
+    document.getElementById('welcomeSubmit').disabled = true;
+    setTimeout(() => showView('dashboard'), 1500);
+  });
+  document.getElementById('welcomeEmail').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('welcomeSubmit').click();
+  });
+
+  // Dashboard nav
+  document.querySelectorAll('[data-section]').forEach(el => {
+    if (el.classList.contains('dash-nav-item'))
+      el.addEventListener('click', () => renderSection(el.dataset.section));
+  });
+
+  // Topbar avatar (logout to welcome)
+  document.getElementById('topbarAvatar').addEventListener('click', () => {
+    if (confirm('Se déconnecter ?')) { state.authenticated = false; showView('welcome'); }
+  });
+
+  // New workflow buttons
+  document.getElementById('newWorkflowBtn').addEventListener('click', startNewWorkflow);
+  document.getElementById('createFirstBtn').addEventListener('click', startNewWorkflow);
+
+  // Onboarding filters
+  document.getElementById('filterPeriod').addEventListener('change', e => { state.ob.period = parseInt(e.target.value); state.ob.page = 1; renderOnboardings(); });
+  document.getElementById('filterStatus').addEventListener('change', e => { state.ob.status = e.target.value; state.ob.page = 1; renderOnboardings(); });
+  document.getElementById('filterWorkflow').addEventListener('change', e => { state.ob.workflow = e.target.value; state.ob.page = 1; renderOnboardings(); });
+
+  // Drawer overlay click
+  document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+
+  // Users invite
+  document.getElementById('inviteUserBtn').addEventListener('click', () => openModal('inviteModal'));
+  document.getElementById('inviteSend').addEventListener('click', () => {
+    const email = document.getElementById('inviteEmail').value.trim();
+    const role = document.getElementById('inviteRole').value;
+    if (!email) { showToast('⚠ Email requis', 'warning'); return; }
+    state.users.push({ id: 'u' + Date.now(), name: email.split('@')[0], email, role, lastSeen: '—' });
+    closeModal('inviteModal');
+    document.getElementById('inviteEmail').value = '';
+    renderUsers();
+    showToast('✓ Invitation envoyée', 'success');
+  });
+
+  // Settings tabs
+  document.querySelectorAll('[data-settab]').forEach(el => el.addEventListener('click', () => {
+    document.querySelectorAll('[data-settab]').forEach(t => t.classList.toggle('active', t === el));
+    document.querySelectorAll('[data-setpanel]').forEach(p => p.classList.toggle('active', p.dataset.setpanel === el.dataset.settab));
+  }));
+  // Settings inputs
+  document.getElementById('settingsLogoUrl').addEventListener('input', e => { state.business.logoUrl = e.target.value; updateSettingsPreview(); });
+  document.getElementById('settingsWelcomeText').addEventListener('input', updateSettingsPreview);
+  document.getElementById('settingsPrimaryColor').addEventListener('input', e => {
+    state.business.primaryColor = e.target.value;
+    document.getElementById('settingsColorHex').textContent = e.target.value;
+    document.getElementById('settingsColorSwatch').style.background = e.target.value;
+    updateSettingsPreview();
+  });
+
+  // Wizard back to dashboard
+  document.getElementById('backToDashboardLink').addEventListener('click', () => showView('dashboard'));
+  document.getElementById('cancelToHome').addEventListener('click', () => showView('dashboard'));
+
+  // Wizard back nav buttons
+  document.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => goToStep(parseInt(el.dataset.go))));
+
+  // Step 1
+  document.getElementById('workflowName').addEventListener('input', e => {
+    state.current.name = e.target.value;
+    document.getElementById('step1Next').disabled = !state.current.name.trim() || !state.current.type;
+    renderStepper();
+  });
+  document.querySelectorAll('[data-workflow-type]').forEach(el => el.addEventListener('click', () => {
+    state.current.type = el.dataset.workflowType; renderStep1(); renderStepper();
+  }));
+  document.getElementById('step1Next').addEventListener('click', () => { if (state.current.name.trim() && state.current.type) goToStep(2); });
+
+  // Step 2
+  document.querySelectorAll('[data-template]').forEach(el => el.addEventListener('click', () => {
+    applyTemplate(el.dataset.template); renderStep2(); renderStepper();
+  }));
+  document.getElementById('step2Next').addEventListener('click', () => { if (state.current.certif) goToStep(3); });
+
+  // Step 3
+  document.querySelectorAll('[data-doc-method]').forEach(el => el.addEventListener('click', () => {
+    const w = state.current; w.doc.method = el.dataset.docMethod;
+    if (el.dataset.docMethod === 'nfc-strict') { w.doc.pad = false; w.doc.iad = false; w.doc.challenges = false; }
+    else if (el.dataset.docMethod === 'photo') { w.doc.pad = true; w.doc.iad = false; w.doc.challenges = false; }
+    else if (el.dataset.docMethod === 'nfc-fallback' || el.dataset.docMethod === 'video') {
+      w.doc.pad = true;
+      if (w.certif === 'eidas-eleve') { w.doc.iad = true; w.doc.challenges = true; }
+    }
+    else if (el.dataset.docMethod === 'eudiw') { w.doc.pad = false; w.doc.iad = false; w.doc.challenges = false; }
+    renderStep3(); renderStepper();
+  }));
+  document.getElementById('docPadInput').addEventListener('change', e => { state.current.doc.pad = e.target.checked; renderStep3(); });
+  document.getElementById('docIadInput').addEventListener('change', e => { state.current.doc.iad = e.target.checked; if (!e.target.checked) state.current.doc.challenges = false; renderStep3(); });
+  document.getElementById('docChallengesInput').addEventListener('change', e => { state.current.doc.challenges = e.target.checked; renderStep3(); });
+  document.getElementById('step3Next').addEventListener('click', () => { if (state.current.doc.method) goToStep(4); });
+
+  // Step 4
+  document.querySelectorAll('[data-face-method]').forEach(el => el.addEventListener('click', () => {
+    const w = state.current; w.face.method = el.dataset.faceMethod;
+    if (el.dataset.faceMethod === 'photo') { w.face.pad = true; w.face.iad = false; w.face.challenges = false; }
+    else if (el.dataset.faceMethod === 'video') { w.face.pad = true; w.face.iad = true; if (w.certif === 'eidas-eleve') w.face.challenges = true; }
+    else { w.face.pad = false; w.face.iad = false; w.face.challenges = false; }
+    renderStep4(); renderStepper();
+  }));
+  document.getElementById('facePadInput').addEventListener('change', e => { state.current.face.pad = e.target.checked; renderStep4(); });
+  document.getElementById('faceIadInput').addEventListener('change', e => { state.current.face.iad = e.target.checked; if (!e.target.checked) state.current.face.challenges = false; renderStep4(); });
+  document.getElementById('faceChallengesInput').addEventListener('change', e => { state.current.face.challenges = e.target.checked; renderStep4(); });
+  document.getElementById('reauthInput').addEventListener('change', e => {
+    state.current.reauth = e.target.checked;
+    if (e.target.checked && state.current.face.method === 'none') state.current.face.method = 'video';
+    renderStep4();
+  });
+  document.getElementById('step4Next').addEventListener('click', () => { if (state.current.face.method) goToStep(5); });
+
+  // Step 5
+  document.querySelectorAll('[data-ocr]').forEach(el => el.addEventListener('click', () => { state.current.output.ocrLevel = el.dataset.ocr; renderStep5(); renderStepper(); }));
+  document.querySelectorAll('[data-output-format]').forEach(el => el.addEventListener('click', () => { state.current.output.format = el.dataset.outputFormat; renderStep5(); renderStepper(); }));
+  document.getElementById('assetsInput').addEventListener('change', e => { state.current.output.assets = e.target.checked; });
+  document.getElementById('retentionSlider').addEventListener('input', e => {
+    const idx = parseInt(e.target.value);
+    state.current.output.retention = RETENTIONS[idx].days;
+    document.getElementById('retentionDisplay').textContent = RETENTIONS[idx].label;
+  });
+  document.getElementById('webhookUrl').addEventListener('input', e => { state.current.output.webhookUrl = e.target.value; });
+  document.getElementById('step5Next').addEventListener('click', () => {
+    if (!state.current.output.ocrLevel) state.current.output.ocrLevel = 'standard';
+    if (!state.current.output.format) state.current.output.format = 'json';
+    goToStep(6);
+  });
+
+  // Step 6
+  document.getElementById('step6Next').addEventListener('click', () => goToStep(7));
+
+  // Step 7
+  document.getElementById('volumeSlider').addEventListener('input', e => {
+    state.current.volume.monthly = VOLUMES[parseInt(e.target.value)];
+    document.getElementById('volumeDisplay').textContent = formatNum(state.current.volume.monthly);
+    const c = compute(state.current);
+    document.getElementById('step7TokensMonth').textContent = formatNum(Math.round(state.current.volume.monthly * c.tokens));
+  });
+  document.querySelectorAll('[data-recurrence]').forEach(el => el.addEventListener('click', () => { state.current.volume.recurrence = el.dataset.recurrence; renderStep7(); renderStepper(); }));
+  document.querySelectorAll('[data-geo]').forEach(el => el.addEventListener('click', () => { state.current.volume.geo = el.dataset.geo; renderStep7(); renderStepper(); }));
+  document.getElementById('step7Next').addEventListener('click', () => { if (state.current.volume.recurrence && state.current.volume.geo) goToStep(8); });
+
+  // Step 8
+  document.getElementById('logoUrl').addEventListener('input', e => { state.current.branding.logoUrl = e.target.value; renderStep8(); });
+  document.getElementById('welcomeText').addEventListener('input', e => { state.current.branding.welcomeText = e.target.value; renderStep8(); });
+  document.getElementById('primaryColor').addEventListener('input', e => { state.current.branding.primaryColor = e.target.value; renderStep8(); });
+  document.getElementById('step8Next').addEventListener('click', () => { state.step = 9; goToStep(9); });
+
+  // Step 9 — Finish
+  document.getElementById('finishWizard').addEventListener('click', () => {
+    // Save current to workflows
+    const w = state.current;
+    const idx = state.workflows.findIndex(x => x.id === w.id);
+    if (idx >= 0) state.workflows[idx] = JSON.parse(JSON.stringify(w));
+    else state.workflows.push(JSON.parse(JSON.stringify(w)));
+    state.current = null;
+    showView('dashboard');
+    renderSection('workflows');
+    showToast('🎉 Workflow créé', 'success');
+  });
+}
+
+/* === MODAL HELPERS === */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+/* === HELPERS === */
+function showToast(msg, kind) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (kind || '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+function copyText(text, label) {
+  navigator.clipboard.writeText(text).then(() => showToast('✓ ' + (label || 'Copié'), 'success'));
+}
+function formatNum(n) { return n.toLocaleString('fr-FR'); }
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+function formatRelative(iso) {
+  if (!iso || iso === '—') return '—';
+  const d = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (d < 60) return 'à l\'instant';
+  if (d < 3600) return `il y a ${Math.floor(d / 60)} min`;
+  if (d < 86400) return `il y a ${Math.floor(d / 3600)} h`;
+  return `il y a ${Math.floor(d / 86400)} j`;
+}
+function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function getCss(varName) { return getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); }
+
+/* === INIT === */
+function init() {
+  generateMockData();
+  bindEvents();
+  // Default to dashboard for quick demo (skip welcome) — but show welcome first
+  showView('welcome');
+}
+init();
+</script>
+</body>
+</html>
