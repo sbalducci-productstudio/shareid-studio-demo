@@ -2408,6 +2408,18 @@ function renderStep8() {
 function renderStep9() {
   const w = state.current;
   if (!w.env) generatePack();
+  else {
+    // Already generated — repopulate display from existing env
+    document.getElementById('envDashUrl').textContent = w.env.dashUrl;
+    document.getElementById('envDashMagic').textContent = w.env.dashMagic;
+    document.getElementById('envSdkKey').textContent = w.env.sdkKey;
+    document.getElementById('envApiKey').textContent = w.env.apiKey;
+    document.getElementById('envHmac').textContent = w.env.hmac;
+    document.getElementById('envDemoUrl').textContent = w.env.demoUrl;
+    renderQR(document.getElementById('envQr'), w.env.demoUrl, 200);
+    const profileEl = document.getElementById('envProfileJson');
+    if (profileEl) profileEl.textContent = JSON.stringify(buildProfileJson(w), null, 2);
+  }
 }
 
 function generatePack() {
