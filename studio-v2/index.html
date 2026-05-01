@@ -1,0 +1,1624 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShareID Studio v2 — Prototype démo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --shareid-blue: #3B4DBE;
+    --shareid-blue-hover: #2F3FA8;
+    --shareid-blue-light: rgba(59, 77, 190, 0.10);
+    --shareid-blue-light2: rgba(59, 77, 190, 0.18);
+    --bg: #fafafb;
+    --bg-elev: #ffffff;
+    --bg-card: #ffffff;
+    --bg-sidebar: #fcfcfd;
+    --bg-subtle: #f5f5f7;
+    --text: #0a0a0c;
+    --text-2: #555562;
+    --text-3: #93939d;
+    --border: #ececf0;
+    --border-strong: #d4d4dc;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #0284c7;
+    --shadow-sm: 0 1px 2px rgba(20,20,30,0.04);
+    --shadow-md: 0 4px 16px rgba(20,20,30,0.06);
+    --shadow-lg: 0 10px 40px rgba(20,20,30,0.08);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: var(--text); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+  /* === Layout principal === */
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .app.welcome-mode { grid-template-columns: 1fr; }
+  .app.welcome-mode .sidebar { display: none; }
+
+  /* === Sidebar === */
+  .sidebar { background: var(--shareid-blue); color: rgba(255,255,255,0.85); padding: 18px 14px; display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 6px 18px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 14px; }
+  .brand-mark { width: 32px; height: 32px; background: white; color: var(--shareid-blue); border-radius: 9px; display: grid; place-items: center; font-weight: 800; font-size: 15px; box-shadow: 0 0 0 4px rgba(255,255,255,0.15); }
+  .brand-name { font-weight: 700; font-size: 16px; color: white; }
+  .brand-sub { font-size: 11px; color: rgba(255,255,255,0.65); }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav-section { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 12px 12px 4px; font-weight: 700; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; color: rgba(255,255,255,0.78); transition: all 150ms; font-weight: 500; font-size: 13px; }
+  .nav-item:hover { background: rgba(255,255,255,0.10); color: white; }
+  .nav-item.active { background: white; color: var(--shareid-blue); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .nav-icon { width: 18px; text-align: center; flex-shrink: 0; }
+  .nav-item.disabled { opacity: 0.35; cursor: not-allowed; }
+  .nav-item.disabled:hover { background: transparent; color: rgba(255,255,255,0.78); }
+
+  .sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 11px; color: rgba(255,255,255,0.55); }
+
+  /* === Main area === */
+  .main { display: flex; flex-direction: column; min-width: 0; }
+
+  /* === Topbar === */
+  .topbar { background: var(--bg-elev); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 5; }
+  .topbar-tenant { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 8px; background: var(--bg-subtle); font-size: 13px; font-weight: 600; }
+  .topbar-spacer { flex: 1; }
+
+  /* === View-as switcher (centerpiece v2) === */
+  .viewas-wrap { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(59,77,190,0.06); border: 1px solid rgba(59,77,190,0.2); }
+  .viewas-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--shareid-blue); }
+  .viewas-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 6px 28px 6px 10px; font: inherit; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23555' d='M0 0l5 6 5-6z'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; }
+
+  .topbar-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--shareid-blue); color: white; font-weight: 700; display: grid; place-items: center; font-size: 12px; cursor: pointer; }
+
+  /* === Content === */
+  .content { flex: 1; padding: 28px 32px 64px; overflow-y: auto; }
+
+  .section-page { display: none; flex-direction: column; gap: 22px; }
+  .section-page.active { display: flex; }
+  .section-h1 { font-size: 24px; font-weight: 800; margin: 0; }
+  .section-h1-sub { font-size: 14px; color: var(--text-2); margin: 4px 0 0; }
+  .section-header { display: flex; align-items: flex-start; gap: 12px; }
+  .section-header .grow { flex: 1; }
+
+  /* === Buttons === */
+  .btn { appearance: none; border: 1.5px solid var(--border-strong); background: var(--bg-card); color: var(--text); padding: 10px 18px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 150ms; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover:not(:disabled) { border-color: var(--text-3); background: var(--bg-elev); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: var(--shareid-blue); color: white; border-color: var(--shareid-blue); box-shadow: 0 1px 3px rgba(59,77,190,0.3); }
+  .btn.primary:hover:not(:disabled) { background: var(--shareid-blue-hover); border-color: var(--shareid-blue-hover); box-shadow: 0 4px 12px rgba(59,77,190,0.35); }
+  .btn.danger { color: var(--danger); border-color: rgba(220,38,38,0.3); }
+  .btn.danger:hover:not(:disabled) { background: rgba(220,38,38,0.08); }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.ghost:hover:not(:disabled) { background: var(--bg-subtle); }
+  .btn.sm { padding: 6px 12px; font-size: 12px; }
+  .btn.full { width: 100%; justify-content: center; }
+
+  /* === Inputs === */
+  .text-input, .textarea-input, .select-input { width: 100%; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 14px; color: var(--text); transition: border-color 150ms; }
+  .text-input:focus, .textarea-input:focus, .select-input:focus { outline: none; border-color: var(--shareid-blue); }
+  .input-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .input-hint { font-size: 12px; color: var(--text-3); }
+
+  /* === Cards === */
+  .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; }
+  .panel-h { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+  .panel-h-sub { font-size: 12px; color: var(--text-3); font-weight: 500; margin: 0 0 10px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 18px; }
+  .kpi-label { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700; color: var(--text-3); }
+  .kpi-value { font-size: 24px; font-weight: 800; margin-top: 4px; line-height: 1.1; }
+  .kpi-trend { font-size: 12px; color: var(--success); margin-top: 4px; font-weight: 600; }
+  .kpi-trend.down { color: var(--danger); }
+
+  /* === Badges === */
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 5px; background: var(--bg-subtle); color: var(--text-2); }
+  .badge.success { background: rgba(22,163,74,0.12); color: var(--success); }
+  .badge.warning { background: rgba(217,119,6,0.12); color: var(--warning); }
+  .badge.danger { background: rgba(220,38,38,0.12); color: var(--danger); }
+  .badge.info { background: rgba(2,132,199,0.12); color: var(--info); }
+  .badge.eidas-eleve { background: rgba(22,163,74,0.12); color: var(--success); }
+  .badge.eidas-substantiel { background: rgba(2,132,199,0.12); color: var(--info); }
+  .badge.eidas-faible { background: rgba(110,110,118,0.12); color: var(--text-2); }
+  .badge.kind-standalone { background: rgba(110,110,118,0.12); color: var(--text-2); }
+  .badge.kind-retailer { background: rgba(217,119,6,0.12); color: var(--warning); }
+  .badge.kind-group { background: rgba(2,132,199,0.12); color: var(--info); }
+
+  /* === Tables === */
+  .table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { text-align: left; padding: 11px 14px; font-weight: 700; font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; background: var(--bg-subtle); border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .data-table tr:last-child td { border-bottom: 0; }
+  .data-table tr.clickable { cursor: pointer; }
+  .data-table tr.clickable:hover { background: var(--bg-subtle); }
+
+  /* === Welcome === */
+  .welcome { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f7f7fb 0%, #eef0fa 100%); padding: 20px; }
+  .welcome-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 40px 36px; max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+  .welcome-card h1 { font-size: 22px; font-weight: 800; margin: 0; text-align: center; }
+  .welcome-card p { font-size: 14px; color: var(--text-2); margin: 0; text-align: center; }
+  .welcome-roles { display: flex; flex-direction: column; gap: 8px; }
+  .welcome-role-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg-card); cursor: pointer; transition: all 150ms; text-align: left; }
+  .welcome-role-btn:hover { border-color: var(--shareid-blue); background: var(--shareid-blue-light); }
+  .welcome-role-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--shareid-blue-light); color: var(--shareid-blue); display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+  .welcome-role-body { flex: 1; }
+  .welcome-role-name { font-weight: 700; font-size: 14px; }
+  .welcome-role-sub { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+  /* === Tenants page === */
+  .tenants-tree { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; }
+  .tenant-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: background 150ms; }
+  .tenant-row:hover { background: var(--bg-subtle); }
+  .tenant-row .indent { display: inline-block; }
+  .tenant-row .tenant-name { font-weight: 600; font-size: 14px; }
+  .tenant-row .tenant-meta { font-size: 12px; color: var(--text-2); }
+  .tenant-row .grow { flex: 1; }
+
+  /* === Workflows grid === */
+  .workflows-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .workflow-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 18px; cursor: pointer; transition: all 150ms; display: flex; flex-direction: column; gap: 8px; }
+  .workflow-card:hover { border-color: var(--shareid-blue); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .workflow-card .name { font-weight: 700; font-size: 15px; }
+  .workflow-card .meta-line { font-size: 12px; color: var(--text-2); display: flex; gap: 6px; align-items: center; }
+  .workflow-card .meta-line .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-3); }
+  .workflow-card .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .workflow-card .footer { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+
+  .new-workflow-card { background: var(--bg-card); border: 2px dashed var(--border-strong); border-radius: var(--radius-md); padding: 18px 20px; cursor: pointer; transition: all 150ms; display: flex; align-items: center; justify-content: center; min-height: 130px; color: var(--text-2); font-weight: 600; }
+  .new-workflow-card:hover { border-color: var(--shareid-blue); color: var(--shareid-blue); }
+
+  /* === Builder === */
+  .builder-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  .builder-canvas { display: flex; flex-direction: column; gap: 16px; }
+  .builder-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; }
+  .builder-block.disabled { opacity: 0.4; pointer-events: none; }
+  .builder-block-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .builder-block-h .num { width: 24px; height: 24px; border-radius: 50%; background: var(--shareid-blue); color: white; display: grid; place-items: center; font-weight: 800; font-size: 12px; flex-shrink: 0; }
+  .builder-block-h h3 { margin: 0; font-size: 15px; font-weight: 700; flex: 1; }
+  .builder-block .options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .builder-option { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: var(--bg-subtle); }
+  .builder-option .opt-label { font-size: 13px; font-weight: 600; }
+  .builder-option .opt-help { font-size: 11px; color: var(--text-3); display: block; margin-top: 2px; }
+
+  .toggle-switch { display: inline-block; width: 36px; height: 20px; background: var(--border-strong); border-radius: 10px; position: relative; cursor: pointer; transition: background 150ms; flex-shrink: 0; }
+  .toggle-switch::after { content: ''; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: transform 150ms; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  .toggle-switch.on { background: var(--shareid-blue); }
+  .toggle-switch.on::after { transform: translateX(16px); }
+
+  .radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .radio-pill { padding: 6px 12px; border-radius: 6px; border: 1.5px solid var(--border); background: var(--bg-card); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .radio-pill.active { background: var(--shareid-blue); color: white; border-color: var(--shareid-blue); }
+
+  .builder-aside { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 80px; align-self: flex-start; }
+  .compliance-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; }
+  .compliance-level { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); font-weight: 700; }
+  .compliance-value { font-size: 26px; font-weight: 800; margin: 4px 0; }
+  .compliance-sub { font-size: 12px; color: var(--text-2); line-height: 1.4; margin-bottom: 12px; }
+  .compliance-refs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .compliance-ref { font-size: 10px; padding: 3px 7px; border-radius: 4px; background: var(--shareid-blue-light); color: var(--shareid-blue); font-weight: 700; }
+  .compliance-disclaimer { font-size: 11px; color: var(--text-3); font-style: italic; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+  .complexity-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 18px; }
+  .complexity-level { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); font-weight: 700; }
+  .complexity-value { font-size: 22px; font-weight: 800; color: var(--shareid-blue); margin: 4px 0; }
+  .complexity-note { font-size: 11px; color: var(--text-3); font-style: italic; }
+
+  .branding-warn { background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.3); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--warning); line-height: 1.45; }
+  .branding-warn strong { display: block; font-weight: 700; margin-bottom: 2px; }
+
+  .exclusion-warning { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.3); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--danger); margin-top: 10px; line-height: 1.45; display: flex; gap: 8px; align-items: flex-start; }
+
+  /* === Modals & drawers === */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(20,20,30,0.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 100; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg-card); border-radius: var(--radius-lg); max-width: 480px; width: 100%; box-shadow: var(--shadow-lg); }
+  .modal-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .modal-header h2 { margin: 0; font-size: 16px; font-weight: 700; flex: 1; }
+  .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; }
+  .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(20,20,30,0.4); backdrop-filter: blur(2px); display: none; z-index: 100; }
+  .drawer-overlay.open { display: block; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 520px; max-width: 100%; background: var(--bg-card); box-shadow: var(--shadow-lg); overflow-y: auto; transform: translateX(100%); transition: transform 250ms; z-index: 101; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--bg-card); }
+  .drawer-header h2 { margin: 0; font-size: 16px; font-weight: 700; flex: 1; }
+  .drawer-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* === Verdict step (replay) === */
+  .verdict-step { background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .verdict-step .step-name { font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .verdict-criteria { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .json-block { background: #0e0e12; color: #e3e3e8; border-radius: 8px; padding: 14px 16px; font-family: 'SF Mono', Monaco, monospace; font-size: 11px; line-height: 1.6; overflow-x: auto; white-space: pre; }
+
+  /* === Empty state === */
+  .empty-state { background: var(--bg-card); border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); padding: 48px 28px; text-align: center; }
+  .empty-state .glyph { font-size: 36px; margin-bottom: 14px; opacity: 0.4; }
+  .empty-state h3 { font-size: 17px; font-weight: 700; margin: 0 0 6px; }
+  .empty-state p { color: var(--text-2); margin: 0 0 18px; font-size: 13px; }
+
+  /* === Group console === */
+  .group-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .group-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; }
+  .group-card-name { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+  .group-card-stats { display: flex; flex-direction: column; gap: 6px; }
+  .group-card-stat { display: flex; justify-content: space-between; font-size: 12px; }
+  .group-card-stat .lbl { color: var(--text-3); }
+  .group-card-stat .val { font-weight: 700; }
+
+  /* === Reporting compare === */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .compare-side { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px; }
+  .compare-side h4 { margin: 0 0 12px; font-size: 13px; font-weight: 700; }
+  .funnel-step { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .funnel-step:last-child { border-bottom: 0; }
+  .funnel-step .lbl { font-size: 12px; font-weight: 600; }
+  .funnel-step .bar-wrap { background: var(--bg-subtle); border-radius: 4px; height: 8px; overflow: hidden; }
+  .funnel-step .bar { background: var(--shareid-blue); height: 100%; }
+
+  /* === Settings tabs === */
+  .settings-tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .settings-tab { padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text-3); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .settings-tab.active { color: var(--shareid-blue); border-bottom-color: var(--shareid-blue); }
+  .settings-panel { display: none; flex-direction: column; gap: 18px; }
+  .settings-panel.active { display: flex; }
+
+  /* === PII blur === */
+  .pii-blur { filter: blur(5px); user-select: none; pointer-events: none; }
+  .pii-redacted { color: var(--text-3); font-style: italic; }
+
+  /* === Utilities === */
+  .row { display: flex; gap: 10px; align-items: center; }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .grow { flex: 1; }
+  .text-muted { color: var(--text-2); }
+  .text-small { font-size: 12px; }
+  .hidden { display: none !important; }
+  .pill { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: var(--shareid-blue-light); color: var(--shareid-blue); text-transform: uppercase; letter-spacing: 0.04em; }
+  .divider { height: 1px; background: var(--border); margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<!-- ====================================================================== -->
+<!-- WELCOME view                                                            -->
+<!-- ====================================================================== -->
+<div id="welcome" class="welcome">
+  <div class="welcome-card">
+    <div class="brand" style="justify-content:center; border-bottom:0; margin:0; padding:0;">
+      <div class="brand-mark" style="background:var(--shareid-blue); color:white;">S</div>
+      <div>
+        <div class="brand-name" style="color:var(--text);">ShareID Studio</div>
+        <div class="brand-sub" style="color:var(--text-3);">Prototype v2 — démo</div>
+      </div>
+    </div>
+    <h1>Choisissez un rôle pour démarrer</h1>
+    <p>Ce prototype exécute les <strong>4 master stories</strong> sur les <strong>3 archétypes multi-tenant</strong>. Vous pouvez basculer le rôle à tout moment via le sélecteur "View as" en haut.</p>
+    <div class="welcome-roles" id="welcome-roles">
+      <!-- rôles injectés en JS -->
+    </div>
+    <p class="text-small text-muted" style="margin-top:8px;">
+      Disclaimer : ce prototype est une aide à la conviction (PRD v2 ShareID Studio), pas un livrable production-ready. Les wireframes Figma seront produits par Igor à partir de cette PRD.
+    </p>
+  </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- MAIN APP                                                                -->
+<!-- ====================================================================== -->
+<div id="app" class="app hidden">
+
+  <!-- ==== Sidebar ==== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div>
+        <div class="brand-name">ShareID Studio</div>
+        <div class="brand-sub">v2 prototype</div>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <!-- nav items injectés en JS selon rôle -->
+    </nav>
+
+    <div class="sidebar-footer">
+      © ShareID 2026 — démo<br>
+      <span style="opacity:0.7;">Tenant en cours :</span><br>
+      <span id="sidebar-tenant" style="font-weight:700;color:white;">—</span>
+    </div>
+  </aside>
+
+  <!-- ==== Main ==== -->
+  <div class="main">
+
+    <!-- ==== Topbar ==== -->
+    <header class="topbar">
+      <div class="topbar-tenant" id="topbar-tenant">
+        <span style="font-size:14px;">🏢</span>
+        <span id="topbar-tenant-name">—</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="viewas-wrap">
+        <span class="viewas-label">View as:</span>
+        <select class="viewas-select" id="viewas-select" onchange="switchViewAs(this.value)">
+          <!-- options injectées en JS -->
+        </select>
+      </div>
+      <div class="topbar-avatar" id="topbar-avatar" title="Logout (back to welcome)" onclick="logout()">U</div>
+    </header>
+
+    <!-- ==== Content area ==== -->
+    <main class="content" id="content">
+
+      <!-- ====================== Page : Tenants ====================== -->
+      <section id="page-tenants" class="section-page">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Tenants</h1>
+            <p class="section-h1-sub">Gérez les comptes clients et la hiérarchie multi-tenant. Story 1 — sales configure l'admin du client.</p>
+          </div>
+          <button class="btn primary" onclick="openCreateTenant()">+ Créer un tenant</button>
+        </div>
+        <div class="tenants-tree" id="tenants-tree"></div>
+      </section>
+
+      <!-- ====================== Page : Workflows ====================== -->
+      <section id="page-workflows" class="section-page">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Workflows</h1>
+            <p class="section-h1-sub" id="workflows-sub">Vos parcours de vérification. Stories 2 (sales setup 1er) et 3 (client crée N).</p>
+          </div>
+          <button class="btn primary" onclick="openBuilder()" id="btn-new-workflow">+ Nouveau parcours</button>
+        </div>
+        <div class="workflows-grid" id="workflows-grid"></div>
+      </section>
+
+      <!-- ====================== Page : Builder ====================== -->
+      <section id="page-builder" class="section-page">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Configurer un parcours</h1>
+            <p class="section-h1-sub">Builder vierge — drag-and-drop des modules. Pricing & branding au niveau business (voir Settings).</p>
+          </div>
+          <button class="btn ghost" onclick="navigate('workflows')">← Annuler</button>
+          <button class="btn primary" onclick="saveWorkflow()">💾 Save profile</button>
+        </div>
+
+        <div class="builder-layout">
+          <div class="builder-canvas">
+
+            <!-- Profile name -->
+            <div class="builder-block">
+              <div class="row">
+                <div class="grow">
+                  <div class="input-wrap">
+                    <span class="input-label">Nom du parcours</span>
+                    <input type="text" class="text-input" id="bld-name" placeholder="ex : Atijari Wafa Bank Maroc — Onboarding compte courant" />
+                  </div>
+                </div>
+              </div>
+              <div class="row" style="margin-top:14px;">
+                <div class="grow">
+                  <div class="input-wrap">
+                    <span class="input-label">Vertical (informatif)</span>
+                    <select class="select-input" id="bld-vertical">
+                      <option value="">— Choisir —</option>
+                      <option>BFSI</option><option>Fintech</option><option>Telco</option><option>Govt</option><option>Marketplace</option><option>Age verification</option><option>EUDIw</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="grow" id="bld-inheritance-wrap" style="display:none;">
+                  <div class="input-wrap">
+                    <span class="input-label">Inheritance (groupe)</span>
+                    <select class="select-input" id="bld-inheritance">
+                      <option value="local_only">Local only — visible uniquement ici</option>
+                      <option value="cascade">Cascade — hérité par toutes les filiales descendantes</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- EUDIw toggle -->
+            <div class="builder-block">
+              <div class="builder-block-h">
+                <div class="num">↗</div>
+                <h3>EUDIw input alternatif (optionnel)</h3>
+                <span class="toggle-switch" id="bld-eudiw-toggle" onclick="toggleEudiw(this)"></span>
+              </div>
+              <p class="text-small text-muted">Si activé, le bloc Doc est remplacé par EUDIw (mdoc / SD-JWT via OpenID4VP). Face reste systématique sauf opt-out.</p>
+            </div>
+
+            <!-- Bloc DOC -->
+            <div class="builder-block" id="bld-block-doc">
+              <div class="builder-block-h">
+                <div class="num">1</div>
+                <h3>Bloc Doc</h3>
+              </div>
+              <div class="options-grid">
+                <div class="builder-option">
+                  <div><span class="opt-label">Capture</span><span class="opt-help">Photo ou vidéo</span></div>
+                  <div class="radio-group">
+                    <span class="radio-pill" data-doc-capture="photo">Photo</span>
+                    <span class="radio-pill active" data-doc-capture="video">Vidéo</span>
+                  </div>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">NFC</span><span class="opt-help">Lecture cryptographique du chip</span></div>
+                  <div class="radio-group">
+                    <span class="radio-pill active" data-doc-nfc="none">None</span>
+                    <span class="radio-pill" data-doc-nfc="fallback">Fallback</span>
+                    <span class="radio-pill" data-doc-nfc="strict">Strict</span>
+                  </div>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">PAD</span><span class="opt-help">Anti-spoof écran/imprimé</span></div>
+                  <span class="toggle-switch on" data-doc-defense="pad" onclick="toggleDefense(this)"></span>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">IAD</span><span class="opt-help">Anti-deepfake (vidéo only)</span></div>
+                  <span class="toggle-switch" data-doc-defense="iad" onclick="toggleDefense(this)"></span>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">Active challenges</span><span class="opt-help">Mouvements guidés (requires IAD)</span></div>
+                  <span class="toggle-switch" data-doc-defense="challenges" onclick="toggleDefense(this)"></span>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">Photo data extract</span><span class="opt-help">OCR/MRZ pour combler le chip</span></div>
+                  <span class="toggle-switch" data-doc-defense="extract" onclick="toggleDefense(this)"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bloc EUDIw (caché par défaut) -->
+            <div class="builder-block hidden" id="bld-block-eudiw">
+              <div class="builder-block-h">
+                <div class="num">1</div>
+                <h3>Bloc EUDIw (remplace Doc)</h3>
+              </div>
+              <div class="options-grid">
+                <div class="builder-option">
+                  <div><span class="opt-label">Protocole</span></div>
+                  <span class="badge info">OpenID4VP</span>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">Formats acceptés</span></div>
+                  <div class="radio-group">
+                    <span class="radio-pill active">mdoc</span>
+                    <span class="radio-pill active">SD-JWT</span>
+                  </div>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">Vérification crypto</span></div>
+                  <span class="toggle-switch on"></span>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">Revocation list</span></div>
+                  <span class="toggle-switch on"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bloc FACE -->
+            <div class="builder-block">
+              <div class="builder-block-h">
+                <div class="num">2</div>
+                <h3>Bloc Face</h3>
+              </div>
+              <div class="options-grid">
+                <div class="builder-option">
+                  <div><span class="opt-label">Capture</span></div>
+                  <div class="radio-group">
+                    <span class="radio-pill" data-face-capture="none">None</span>
+                    <span class="radio-pill" data-face-capture="photo">Photo</span>
+                    <span class="radio-pill active" data-face-capture="video">Vidéo</span>
+                  </div>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">PAD</span></div>
+                  <span class="toggle-switch on" data-face-defense="pad" onclick="toggleDefense(this)"></span>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">IAD</span><span class="opt-help">Vidéo only</span></div>
+                  <span class="toggle-switch on" data-face-defense="iad" onclick="toggleDefense(this)"></span>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">Active challenges</span></div>
+                  <span class="toggle-switch on" data-face-defense="challenges" onclick="toggleDefense(this)"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bloc OUTPUT -->
+            <div class="builder-block">
+              <div class="builder-block-h">
+                <div class="num">3</div>
+                <h3>Bloc Output</h3>
+              </div>
+              <div class="options-grid">
+                <div class="builder-option">
+                  <div><span class="opt-label">Format</span></div>
+                  <div class="radio-group">
+                    <span class="radio-pill active" data-output-format="standard">JSON standard</span>
+                    <span class="radio-pill" data-output-format="raw">JSON+raw</span>
+                  </div>
+                </div>
+                <div class="builder-option">
+                  <div><span class="opt-label">Heavy load</span><span class="opt-help">Vidéos, photos, traces IA, audit trail</span></div>
+                  <span class="toggle-switch" data-output-flag="heavy" onclick="toggleDefense(this)"></span>
+                </div>
+                <div class="builder-option" style="grid-column: span 2;">
+                  <div class="grow">
+                    <div class="input-wrap">
+                      <span class="input-label">Webhook URL</span>
+                      <input type="text" class="text-input" id="bld-webhook" placeholder="https://api.client.com/webhook/shareid" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Exclusion warnings -->
+            <div id="bld-warnings"></div>
+
+          </div>
+
+          <!-- Aside : compliance + complexity -->
+          <aside class="builder-aside">
+            <div class="compliance-panel">
+              <div class="compliance-level">Niveau d'assurance dérivé</div>
+              <div class="compliance-value" id="bld-eidas-level">—</div>
+              <div class="compliance-sub">Correspond à eIDAS Élevé / Substantiel / Faible — validation finale par votre Compliance Officer.</div>
+              <div class="compliance-refs" id="bld-eidas-refs"></div>
+              <div class="compliance-disclaimer">Estimation indicative — la table de calcul reste à valider juridiquement avant prod.</div>
+            </div>
+
+            <div class="complexity-panel">
+              <div class="complexity-level">Complexité technique</div>
+              <div class="complexity-value" id="bld-complexity">1×</div>
+              <div class="complexity-note">Indication relative — votre quota tokens et facturation s'appliquent au niveau du business. Voir <a href="#" onclick="navigate('settings');return false;">Billing &amp; tokens</a>.</div>
+            </div>
+
+            <div class="branding-warn">
+              <strong>Branding hérité du business</strong>
+              Logo et couleur primaire sont définis au niveau business. Modifier dans <a href="#" onclick="navigate('settings');return false;" style="color:var(--warning);text-decoration:underline;">Settings → Branding</a>.
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ====================== Page : Onboardings ====================== -->
+      <section id="page-onboardings" class="section-page">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Onboardings</h1>
+            <p class="section-h1-sub" id="onboardings-sub">Historique des vérifications réelles. Story 4 — replay et debug.</p>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="onb-kpis"></div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Date</th><th>Applicant</th><th>Tenant</th><th>Profil (version)</th><th>Verdict</th><th>Latence</th><th></th></tr>
+            </thead>
+            <tbody id="onb-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================== Page : Reporting ====================== -->
+      <section id="page-reporting" class="section-page">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Reporting</h1>
+            <p class="section-h1-sub">Volumes, taux, comparaison de versions. Story 4 — affinage.</p>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="rep-kpis"></div>
+
+        <div class="panel">
+          <h3 class="panel-h">Comparer 2 versions d'un profil</h3>
+          <div class="row" style="margin-bottom:14px;">
+            <select class="select-input" id="rep-profile" style="width:auto;">
+              <option>Atijari Maroc — Onboarding compte (v1 ↔ v2)</option>
+              <option>Atijari Tunis — KYC photo (v1 ↔ v2)</option>
+              <option>Fintech XYZ — Onboarding standard (v1 ↔ v2)</option>
+            </select>
+          </div>
+          <div class="compare-grid">
+            <div class="compare-side">
+              <h4>Version 1 (NFC fallback)</h4>
+              <div class="funnel-step"><div class="lbl">Doc capture <span style="float:right;">2 412</span></div><div class="bar-wrap"><div class="bar" style="width:100%"></div></div></div>
+              <div class="funnel-step"><div class="lbl">Doc verified <span style="float:right;">2 234 (92.6%)</span></div><div class="bar-wrap"><div class="bar" style="width:92.6%"></div></div></div>
+              <div class="funnel-step"><div class="lbl">Face matched <span style="float:right;">2 105 (87.3%)</span></div><div class="bar-wrap"><div class="bar" style="width:87.3%"></div></div></div>
+              <div class="funnel-step"><div class="lbl">Output delivered <span style="float:right;">2 097 (86.9%)</span></div><div class="bar-wrap"><div class="bar" style="width:86.9%"></div></div></div>
+            </div>
+            <div class="compare-side">
+              <h4>Version 2 (NFC strict)</h4>
+              <div class="funnel-step"><div class="lbl">Doc capture <span style="float:right;">1 873</span></div><div class="bar-wrap"><div class="bar" style="width:100%"></div></div></div>
+              <div class="funnel-step"><div class="lbl">Doc verified <span style="float:right;">1 798 (95.9%)</span></div><div class="bar-wrap"><div class="bar" style="width:95.9%"></div></div></div>
+              <div class="funnel-step"><div class="lbl">Face matched <span style="float:right;">1 692 (90.3%)</span></div><div class="bar-wrap"><div class="bar" style="width:90.3%"></div></div></div>
+              <div class="funnel-step"><div class="lbl">Output delivered <span style="float:right;">1 691 (90.3%)</span></div><div class="bar-wrap"><div class="bar" style="width:90.3%"></div></div></div>
+            </div>
+          </div>
+          <div style="margin-top:14px; padding:10px 14px; background:rgba(22,163,74,0.10); border:1px solid rgba(22,163,74,0.3); border-radius:8px; font-size:13px; color:var(--success);">
+            <strong>Insight :</strong> +3.4 pts de taux de complétion sur la version v2 (NFC strict), mais -22% de volume entré (filtre matériel). Trade-off à arbitrer selon stratégie.
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== Page : Group Console ====================== -->
+      <section id="page-group" class="section-page">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Group Console — Atijari Wafa Bank</h1>
+            <p class="section-h1-sub">Vue consolidée descendante — banque mère + filiales. Réservée aux Group Admin (data_visibility = full).</p>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Filiales actives</div><div class="kpi-value">4</div><div class="kpi-trend">+1 ce mois</div></div>
+          <div class="kpi-card"><div class="kpi-label">Onboardings 30j (cumul)</div><div class="kpi-value">12 847</div><div class="kpi-trend">+18%</div></div>
+          <div class="kpi-card"><div class="kpi-label">Profils déployés</div><div class="kpi-value">11</div><div class="kpi-trend">+3</div></div>
+          <div class="kpi-card"><div class="kpi-label">Taux verdict vert (avg)</div><div class="kpi-value">89.4%</div><div class="kpi-trend">+1.2 pts</div></div>
+        </div>
+
+        <h3 style="margin:0;font-size:16px;font-weight:700;">Filiales — drilldown</h3>
+        <div class="group-cards" id="group-cards"></div>
+      </section>
+
+      <!-- ====================== Page : Settings ====================== -->
+      <section id="page-settings" class="section-page">
+        <div class="section-header">
+          <div class="grow">
+            <h1 class="section-h1">Settings — niveau business</h1>
+            <p class="section-h1-sub">Branding et tokens sont gérés au niveau du tenant business, propagés à tous les parcours.</p>
+          </div>
+        </div>
+
+        <div class="settings-tabs">
+          <div class="settings-tab active" onclick="switchSettingsTab(this,'branding')">🎨 Branding</div>
+          <div class="settings-tab" onclick="switchSettingsTab(this,'billing')">💰 Billing & tokens</div>
+          <div class="settings-tab" onclick="switchSettingsTab(this,'api')">🔌 API & Webhooks</div>
+        </div>
+
+        <div class="settings-panel active" id="settings-branding">
+          <div class="panel">
+            <h3 class="panel-h">Branding — propagé à tous les parcours du business</h3>
+            <div class="row">
+              <div class="col grow" style="gap:14px;">
+                <div class="input-wrap">
+                  <span class="input-label">Logo (PNG/SVG, max 200 KB)</span>
+                  <input type="text" class="text-input" placeholder="https://cdn.atijari.com/logo.svg" value="https://cdn.atijari.com/logo.svg" />
+                </div>
+                <div class="input-wrap">
+                  <span class="input-label">Couleur primaire</span>
+                  <input type="color" value="#3B4DBE" style="width:60px;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;" />
+                </div>
+                <div class="input-wrap">
+                  <span class="input-label">Welcome text (max 200 caractères)</span>
+                  <textarea class="textarea-input" rows="2" placeholder="Bienvenue chez [Client]. Cette vérification d'identité prend ~2 minutes.">Bienvenue chez Atijari. Cette vérification d'identité prend environ 2 minutes.</textarea>
+                </div>
+                <button class="btn primary" style="align-self:flex-start;">Save branding</button>
+              </div>
+              <div style="width:240px; background: linear-gradient(160deg, #1c1c20 0%, #2a2a35 100%); color: white; border-radius: 18px; padding: 22px 18px;">
+                <div style="background:#3B4DBE;border-radius:6px;padding:10px;text-align:center;font-weight:700;font-size:12px;margin-bottom:14px;">ATIJARI</div>
+                <div style="font-size:13px;font-weight:700;text-align:center;">Bienvenue chez Atijari.</div>
+                <div style="font-size:11px;opacity:0.6;text-align:center;margin-top:4px;">Cette vérification prend ~2 minutes.</div>
+                <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:24px;margin-top:14px;text-align:center;font-size:30px;opacity:0.5;">📷</div>
+                <div style="background:#3B4DBE;border-radius:8px;padding:10px;margin-top:14px;text-align:center;font-weight:700;font-size:12px;">Démarrer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-panel" id="settings-billing">
+          <div class="panel">
+            <h3 class="panel-h">Consommation tokens — niveau business</h3>
+            <p class="panel-h-sub">Le pricing est mutualisé au niveau du business, pas par parcours. Logique : 1 token / MFA, 0,90 € / parcours qualifié (illustratif).</p>
+            <div class="row" style="margin-bottom:14px;">
+              <div class="grow">
+                <div style="font-size:12px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Consommation Mai 2026</div>
+                <div style="font-size:28px;font-weight:800;margin:4px 0;">8 230 / 12 000 tokens</div>
+                <div style="background:var(--bg-subtle);border-radius:6px;height:12px;overflow:hidden;"><div style="background:var(--shareid-blue);height:100%;width:68.6%;"></div></div>
+                <div style="font-size:12px;color:var(--text-2);margin-top:6px;">68.6% du quota — alerte 80% activée</div>
+              </div>
+            </div>
+            <h4 style="font-size:14px;font-weight:700;margin:14px 0 8px;">Décomposition par parcours</h4>
+            <table class="data-table">
+              <thead><tr><th>Parcours</th><th>Tokens consommés</th><th>% du total</th></tr></thead>
+              <tbody>
+                <tr><td>Atijari Maroc — Onboarding compte (v2)</td><td>4 120</td><td>50.1%</td></tr>
+                <tr><td>Atijari Maroc — Signature crédit</td><td>2 410</td><td>29.3%</td></tr>
+                <tr><td>Atijari Maroc — Réauth opération sensible</td><td>1 700</td><td>20.6%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="settings-panel" id="settings-api">
+          <div class="panel">
+            <h3 class="panel-h">API key + webhook (secret-grade)</h3>
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px;">
+              <div style="font-size:12px;font-weight:700;margin-bottom:6px;">API Key (server-side)</div>
+              <code style="font-family:monospace;font-size:11px;color:var(--text-2);">sk_live_atijari_x9hd72jksk03kdjfh8237lksj</code>
+              <div style="margin-top:10px;"><button class="btn sm">Copier</button> <button class="btn sm danger">Régénérer</button></div>
+            </div>
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px;">
+              <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Webhook URL</div>
+              <code style="font-family:monospace;font-size:11px;color:var(--text-2);">https://api.atijari.com/webhook/shareid</code>
+            </div>
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:12px;font-weight:700;margin-bottom:6px;">HMAC secret</div>
+              <code style="font-family:monospace;font-size:11px;color:var(--text-2);">whsec_atijari_8237ldsh7sdkjhf</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ==== Modal create tenant ==== -->
+<div class="modal-overlay" id="modal-create-tenant" onclick="if(event.target===this)closeModal('modal-create-tenant')">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal-header"><h2>Créer un nouveau tenant</h2></div>
+    <div class="modal-body">
+      <div class="input-wrap">
+        <span class="input-label">Nom du client</span>
+        <input type="text" class="text-input" id="ct-name" placeholder="ex : Crédit Mutuel Bretagne" />
+      </div>
+      <div class="input-wrap">
+        <span class="input-label">Vertical</span>
+        <select class="select-input" id="ct-vertical">
+          <option value="BFSI">BFSI</option><option value="Fintech">Fintech</option><option value="Telco">Telco</option><option value="Govt">Govt</option><option value="Marketplace">Marketplace</option>
+        </select>
+      </div>
+      <div class="input-wrap">
+        <span class="input-label">Archétype multi-tenant</span>
+        <div class="radio-group" style="gap:8px;flex-direction:column;align-items:stretch;">
+          <label class="radio-pill" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-width:1.5px;" data-archetype="standalone">
+            <input type="radio" name="archetype" value="standalone" checked style="margin:0;" onchange="updateArchetype()">
+            <div><strong>A — Standalone</strong><div class="text-small text-muted">Un seul tenant. Cas le plus fréquent (fintech, mid-market).</div></div>
+          </label>
+          <label class="radio-pill" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-width:1.5px;" data-archetype="retailer_external">
+            <input type="radio" name="archetype" value="retailer_external" style="margin:0;" onchange="updateArchetype()">
+            <div><strong>B — Retailer multi-business externe</strong><div class="text-small text-muted">Le client revend ShareID (ex: Tessie). data_visibility = none.</div></div>
+          </label>
+          <label class="radio-pill" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-width:1.5px;" data-archetype="group_parent">
+            <input type="radio" name="archetype" value="group_parent" style="margin:0;" onchange="updateArchetype()">
+            <div><strong>C — Chef de groupe multi-filiale</strong><div class="text-small text-muted">Banque mère avec filiales pays/régions (ex: Atijari). data_visibility = full descendant.</div></div>
+          </label>
+        </div>
+      </div>
+      <div class="input-wrap" id="ct-subsidiaries-wrap" style="display:none;">
+        <span class="input-label">Filiales initiales (1 par ligne)</span>
+        <textarea class="textarea-input" id="ct-subsidiaries" rows="3" placeholder="Atijari Maroc&#10;Atijari Tunis&#10;Atijari Sénégal"></textarea>
+      </div>
+      <div class="input-wrap">
+        <span class="input-label">Email du Business Admin (sera invité par magic-link)</span>
+        <input type="text" class="text-input" id="ct-admin-email" placeholder="admin@client.com" />
+      </div>
+      <div class="input-wrap">
+        <span class="input-label">HubSpot deal ID (optionnel)</span>
+        <input type="text" class="text-input" id="ct-deal" placeholder="HS-2026-00xxx" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('modal-create-tenant')">Annuler</button>
+      <button class="btn primary" onclick="createTenant()">Créer le tenant</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==== Drawer replay onboarding ==== -->
+<div class="drawer-overlay" id="drawer-replay" onclick="if(event.target===this)closeDrawer()">
+  <div class="drawer" id="drawer-replay-inner">
+    <div class="drawer-header">
+      <h2>Replay onboarding</h2>
+      <button class="btn ghost sm" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </div>
+</div>
+
+<script>
+/* ====================================================================== *
+ * STATE — données mockées + état runtime                                  *
+ * ====================================================================== */
+
+const ROLES = {
+  shareid_sales: {
+    name: 'ShareID Sales',
+    icon: '🚀',
+    sub: 'Configure les comptes clients et le 1er parcours en démo',
+    nav: ['tenants', 'workflows', 'onboardings', 'reporting', 'settings'],
+    canPII: true,
+    tenant: 'shareid'
+  },
+  retailer_admin_tessie: {
+    name: 'Retailer Admin (Tessie)',
+    icon: '🏪',
+    sub: 'Revendeur externe — accès aux volumes mais pas aux PII end-user',
+    nav: ['tenants', 'reporting', 'onboardings', 'settings'],
+    canPII: false,
+    tenant: 'tessie'
+  },
+  group_admin_atijari: {
+    name: 'Group Admin (Atijari)',
+    icon: '🏛️',
+    sub: 'Chef de groupe interne — accès complet descendant aux filiales',
+    nav: ['group', 'workflows', 'onboardings', 'reporting', 'settings'],
+    canPII: true,
+    tenant: 'atijari-group'
+  },
+  subsidiary_admin_maroc: {
+    name: 'Subsidiary Admin (Atijari Maroc)',
+    icon: '🌍',
+    sub: 'Admin local + lecture stats parent',
+    nav: ['workflows', 'onboardings', 'reporting', 'settings'],
+    canPII: true,
+    tenant: 'atijari-maroc'
+  },
+  business_admin_fintech: {
+    name: 'Business Admin (Fintech XYZ)',
+    icon: '🏢',
+    sub: 'Standalone — gère parcours + équipe + onboardings',
+    nav: ['workflows', 'onboardings', 'reporting', 'settings'],
+    canPII: true,
+    tenant: 'fintech-xyz'
+  },
+  configurator: {
+    name: 'Configurator (Atijari Maroc)',
+    icon: '🛠️',
+    sub: 'Configure parcours, pas accès PII applicants ni billing',
+    nav: ['workflows', 'reporting'],
+    canPII: false,
+    tenant: 'atijari-maroc'
+  }
+};
+
+const NAV_DEF = {
+  tenants:      { icon: '👥', label: 'Tenants', page: 'tenants' },
+  workflows:    { icon: '🏠', label: 'Workflows', page: 'workflows' },
+  onboardings:  { icon: '📋', label: 'Onboardings', page: 'onboardings' },
+  reporting:    { icon: '📊', label: 'Reporting', page: 'reporting' },
+  group:        { icon: '🏛️', label: 'Group Console', page: 'group' },
+  settings:     { icon: '⚙️', label: 'Settings', page: 'settings' }
+};
+
+// Hiérarchie des tenants — pré-créée pour démo
+const TENANTS = [
+  { id: 'shareid', name: 'ShareID', kind: 'retailer_external', visibility: 'full', parent: null, depth: 0 },
+  { id: 'tessie', name: 'Tessie', kind: 'retailer_external', visibility: 'none', parent: 'shareid', depth: 1 },
+  { id: 'tessie-c1', name: 'Tessie-Client-1', kind: 'business_leaf', visibility: 'full', parent: 'tessie', depth: 2 },
+  { id: 'tessie-c2', name: 'Tessie-Client-2', kind: 'business_leaf', visibility: 'full', parent: 'tessie', depth: 2 },
+  { id: 'atijari-group', name: 'Atijari Wafa Bank', kind: 'group_parent', visibility: 'full', parent: 'shareid', depth: 1 },
+  { id: 'atijari-maroc', name: 'Atijari Maroc', kind: 'group_subsidiary', visibility: 'full', parent: 'atijari-group', depth: 2 },
+  { id: 'atijari-tunis', name: 'Atijari Tunis', kind: 'group_subsidiary', visibility: 'full', parent: 'atijari-group', depth: 2 },
+  { id: 'atijari-senegal', name: 'Atijari Sénégal', kind: 'group_subsidiary', visibility: 'full', parent: 'atijari-group', depth: 2 },
+  { id: 'atijari-cdi', name: 'Atijari Côte d\'Ivoire', kind: 'group_subsidiary', visibility: 'full', parent: 'atijari-group', depth: 2 },
+  { id: 'fintech-xyz', name: 'Fintech XYZ', kind: 'standalone', visibility: 'full', parent: 'shareid', depth: 1 }
+];
+
+// Profils pré-créés
+const WORKFLOWS = [
+  { id: 'wf1', tenant: 'atijari-maroc', name: 'Onboarding compte courant', version: 2, status: 'live', eidas: 'substantiel', tokensUsed: 4120, lastModified: '2026-04-28', vertical: 'BFSI', inheritance: 'local_only' },
+  { id: 'wf2', tenant: 'atijari-maroc', name: 'Signature crédit immobilier', version: 1, status: 'live', eidas: 'eleve', tokensUsed: 2410, lastModified: '2026-04-15', vertical: 'BFSI', inheritance: 'local_only' },
+  { id: 'wf3', tenant: 'atijari-maroc', name: 'Réauth opération sensible', version: 1, status: 'saved', eidas: 'substantiel', tokensUsed: 1700, lastModified: '2026-04-22', vertical: 'BFSI', inheritance: 'local_only' },
+  { id: 'wf4', tenant: 'atijari-tunis', name: 'KYC photo standard', version: 2, status: 'live', eidas: 'faible', tokensUsed: 980, lastModified: '2026-04-20', vertical: 'BFSI', inheritance: 'local_only' },
+  { id: 'wf5', tenant: 'atijari-group', name: 'Standard groupe — onboarding', version: 1, status: 'live', eidas: 'substantiel', tokensUsed: 0, lastModified: '2026-04-29', vertical: 'BFSI', inheritance: 'cascade' },
+  { id: 'wf6', tenant: 'fintech-xyz', name: 'Onboarding standard', version: 3, status: 'live', eidas: 'substantiel', tokensUsed: 5300, lastModified: '2026-04-30', vertical: 'Fintech', inheritance: 'local_only' },
+  { id: 'wf7', tenant: 'fintech-xyz', name: 'Premium NFC', version: 1, status: 'draft', eidas: 'eleve', tokensUsed: 0, lastModified: '2026-04-30', vertical: 'Fintech', inheritance: 'local_only' }
+];
+
+// Onboardings (200 entrées générées dynamiquement)
+let ONBOARDINGS = [];
+function generateOnboardings() {
+  const tenants = ['atijari-maroc', 'atijari-tunis', 'atijari-senegal', 'fintech-xyz', 'tessie-c1', 'tessie-c2'];
+  const wfMap = { 'atijari-maroc': ['wf1','wf2','wf3'], 'atijari-tunis':['wf4'], 'atijari-senegal':[], 'fintech-xyz':['wf6','wf7'], 'tessie-c1':[], 'tessie-c2':[] };
+  const verdicts = ['green', 'green', 'green', 'green', 'orange', 'orange', 'red'];
+  const firstNames = ['Mohammed', 'Aïcha', 'Karim', 'Fatima', 'Yassir', 'Leïla', 'Omar', 'Nadia', 'Hassan', 'Salma', 'Jean', 'Marie', 'Paul', 'Sophie', 'Antoine'];
+  const lastNames = ['El Mansouri', 'Benjelloun', 'Khalid', 'Tazi', 'Dupont', 'Martin', 'Bernard', 'Petit', 'Robert', 'Richard'];
+  for (let i = 0; i < 200; i++) {
+    const tenant = tenants[Math.floor(Math.random() * tenants.length)];
+    const wfList = wfMap[tenant] || [];
+    const wf = wfList.length ? wfList[Math.floor(Math.random()*wfList.length)] : null;
+    if (!wf) continue;
+    const verdict = verdicts[Math.floor(Math.random() * verdicts.length)];
+    const fn = firstNames[Math.floor(Math.random()*firstNames.length)];
+    const ln = lastNames[Math.floor(Math.random()*lastNames.length)];
+    const daysAgo = Math.floor(Math.random() * 30);
+    const date = new Date(2026, 3, 30 - daysAgo);
+    ONBOARDINGS.push({
+      id: 'onb_' + (10000 + i),
+      date: date.toISOString().slice(0, 10),
+      timestamp: date.getTime(),
+      tenant,
+      workflow: wf,
+      verdict,
+      latencyMs: 1200 + Math.floor(Math.random() * 4500),
+      applicantName: fn + ' ' + ln,
+      applicantId: 'app_' + (50000 + i)
+    });
+  }
+  ONBOARDINGS.sort((a,b) => b.timestamp - a.timestamp);
+}
+
+let currentRoleKey = null;
+let currentPage = 'tenants';
+
+/* ====================================================================== *
+ * BUILDER state                                                            *
+ * ====================================================================== */
+const BUILDER_STATE = {
+  doc: { capture: 'video', nfc: 'none', defenses: { pad: true, iad: false, challenges: false, extract: false } },
+  face: { capture: 'video', defenses: { pad: true, iad: true, challenges: true } },
+  output: { format: 'standard', flags: { heavy: false } },
+  eudiwOn: false
+};
+
+/* ====================================================================== *
+ * BOOTSTRAP                                                                *
+ * ====================================================================== */
+window.addEventListener('DOMContentLoaded', () => {
+  generateOnboardings();
+  renderWelcome();
+  // restore role from localStorage
+  const stored = localStorage.getItem('shareid-studio-role');
+  if (stored && ROLES[stored]) { setTimeout(() => loginAs(stored), 50); }
+});
+
+function renderWelcome() {
+  const el = document.getElementById('welcome-roles');
+  el.innerHTML = '';
+  Object.keys(ROLES).forEach(key => {
+    const r = ROLES[key];
+    const btn = document.createElement('button');
+    btn.className = 'welcome-role-btn';
+    btn.onclick = () => loginAs(key);
+    btn.innerHTML = `
+      <div class="welcome-role-icon">${r.icon}</div>
+      <div class="welcome-role-body">
+        <div class="welcome-role-name">${r.name}</div>
+        <div class="welcome-role-sub">${r.sub}</div>
+      </div>`;
+    el.appendChild(btn);
+  });
+}
+
+function loginAs(roleKey) {
+  currentRoleKey = roleKey;
+  localStorage.setItem('shareid-studio-role', roleKey);
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderViewAsSelect();
+  renderNav();
+  renderTopbar();
+  // first page = first nav item
+  const firstNav = ROLES[currentRoleKey].nav[0];
+  navigate(firstNav);
+}
+
+function logout() {
+  localStorage.removeItem('shareid-studio-role');
+  document.getElementById('welcome').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+
+function switchViewAs(roleKey) {
+  if (!ROLES[roleKey]) return;
+  loginAs(roleKey);
+}
+
+function renderViewAsSelect() {
+  const sel = document.getElementById('viewas-select');
+  sel.innerHTML = '';
+  Object.keys(ROLES).forEach(key => {
+    const o = document.createElement('option');
+    o.value = key;
+    o.textContent = ROLES[key].name;
+    if (key === currentRoleKey) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function renderNav() {
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  const role = ROLES[currentRoleKey];
+  role.nav.forEach(navKey => {
+    const def = NAV_DEF[navKey];
+    if (!def) return;
+    const item = document.createElement('div');
+    item.className = 'nav-item';
+    item.dataset.page = def.page;
+    item.onclick = () => navigate(def.page);
+    item.innerHTML = `<span class="nav-icon">${def.icon}</span><span>${def.label}</span>`;
+    nav.appendChild(item);
+  });
+  // sidebar tenant
+  document.getElementById('sidebar-tenant').textContent = getTenantName(role.tenant);
+}
+
+function renderTopbar() {
+  const role = ROLES[currentRoleKey];
+  document.getElementById('topbar-tenant-name').textContent = role.name + ' • ' + getTenantName(role.tenant);
+  document.getElementById('topbar-avatar').textContent = role.name.charAt(0);
+}
+
+function getTenantName(id) {
+  const t = TENANTS.find(t => t.id === id);
+  return t ? t.name : id;
+}
+
+/* ====================================================================== *
+ * NAVIGATION                                                               *
+ * ====================================================================== */
+
+function navigate(page) {
+  currentPage = page;
+  // section pages
+  document.querySelectorAll('.section-page').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  // nav active
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  // page-specific render
+  if (page === 'tenants') renderTenantsPage();
+  if (page === 'workflows') renderWorkflowsPage();
+  if (page === 'onboardings') renderOnboardingsPage();
+  if (page === 'reporting') renderReportingPage();
+  if (page === 'group') renderGroupPage();
+  if (page === 'builder') renderBuilderPage();
+}
+
+/* ====================================================================== *
+ * TENANTS                                                                  *
+ * ====================================================================== */
+
+function renderTenantsPage() {
+  const tree = document.getElementById('tenants-tree');
+  tree.innerHTML = '';
+  // build hierarchical render
+  function renderTenant(t, depth) {
+    const row = document.createElement('div');
+    row.className = 'tenant-row';
+    const indent = '&nbsp;'.repeat(depth * 6);
+    let kindBadge = '';
+    if (t.kind === 'standalone') kindBadge = '<span class="badge kind-standalone">Standalone</span>';
+    if (t.kind === 'retailer_external') kindBadge = '<span class="badge kind-retailer">Retailer ext.</span>';
+    if (t.kind === 'group_parent') kindBadge = '<span class="badge kind-group">Group parent</span>';
+    if (t.kind === 'group_subsidiary') kindBadge = '<span class="badge kind-group">Subsidiary</span>';
+    if (t.kind === 'business_leaf') kindBadge = '<span class="badge">Leaf</span>';
+    const visBadge = t.visibility === 'full' ? '<span class="badge success">PII visible</span>' : '<span class="badge warning">PII none</span>';
+    row.innerHTML = `
+      <span class="indent">${indent}</span>
+      <span class="tenant-name">${t.name}</span>
+      ${kindBadge}
+      ${visBadge}
+      <span class="grow"></span>
+      <span class="tenant-meta">tenant_path: shareid${depth > 0 ? '/' + t.id : ''}</span>`;
+    tree.appendChild(row);
+    // recurse children
+    TENANTS.filter(c => c.parent === t.id).forEach(c => renderTenant(c, depth + 1));
+  }
+  TENANTS.filter(t => t.parent === null).forEach(t => renderTenant(t, 0));
+}
+
+function openCreateTenant() {
+  document.getElementById('modal-create-tenant').classList.add('open');
+  // reset
+  document.getElementById('ct-name').value = '';
+  document.getElementById('ct-admin-email').value = '';
+  document.getElementById('ct-deal').value = '';
+  document.getElementById('ct-subsidiaries').value = '';
+  document.querySelector('input[name="archetype"][value="standalone"]').checked = true;
+  updateArchetype();
+}
+
+function updateArchetype() {
+  const v = document.querySelector('input[name="archetype"]:checked').value;
+  document.getElementById('ct-subsidiaries-wrap').style.display = (v === 'group_parent') ? '' : 'none';
+}
+
+function createTenant() {
+  const name = document.getElementById('ct-name').value.trim();
+  if (!name) { alert('Nom requis'); return; }
+  const archetype = document.querySelector('input[name="archetype"]:checked').value;
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const visibility = (archetype === 'retailer_external') ? 'none' : 'full';
+  TENANTS.push({ id, name, kind: archetype, visibility, parent: 'shareid', depth: 1 });
+  if (archetype === 'group_parent') {
+    const subs = document.getElementById('ct-subsidiaries').value.split('\n').map(s => s.trim()).filter(s => s);
+    subs.forEach(sub => {
+      const subId = sub.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      TENANTS.push({ id: subId, name: sub, kind: 'group_subsidiary', visibility: 'full', parent: id, depth: 2 });
+    });
+  }
+  closeModal('modal-create-tenant');
+  renderTenantsPage();
+  alert('✅ Tenant "' + name + '" créé.\nAdmin invité par magic-link (mocké).\nHubSpot deal bind (mocké).');
+}
+
+/* ====================================================================== *
+ * WORKFLOWS + Builder                                                      *
+ * ====================================================================== */
+
+function getCurrentTenantWorkflows() {
+  const role = ROLES[currentRoleKey];
+  if (currentRoleKey === 'shareid_sales') return WORKFLOWS;
+  if (currentRoleKey === 'group_admin_atijari') {
+    // voit tous descendants
+    const descendants = TENANTS.filter(t => isDescendantOf(t.id, 'atijari-group')).map(t => t.id);
+    descendants.push('atijari-group');
+    return WORKFLOWS.filter(w => descendants.includes(w.tenant));
+  }
+  return WORKFLOWS.filter(w => w.tenant === role.tenant);
+}
+
+function isDescendantOf(tenantId, ancestorId) {
+  let t = TENANTS.find(t => t.id === tenantId);
+  while (t && t.parent) {
+    if (t.parent === ancestorId) return true;
+    t = TENANTS.find(tt => tt.id === t.parent);
+  }
+  return false;
+}
+
+function renderWorkflowsPage() {
+  const grid = document.getElementById('workflows-grid');
+  grid.innerHTML = '';
+  const wfs = getCurrentTenantWorkflows();
+  if (wfs.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">
+      <div class="glyph">📋</div><h3>Aucun parcours</h3>
+      <p>Créez votre premier parcours pour démarrer.</p>
+      <button class="btn primary" onclick="openBuilder()">+ Nouveau parcours</button>
+    </div>`;
+    return;
+  }
+  wfs.forEach(wf => {
+    const card = document.createElement('div');
+    card.className = 'workflow-card';
+    const tenantName = getTenantName(wf.tenant);
+    const eidasBadge = `<span class="badge eidas-${wf.eidas}">eIDAS ${wf.eidas}</span>`;
+    const statusBadge = wf.status === 'live' ? '<span class="badge success">Live</span>' :
+                        wf.status === 'saved' ? '<span class="badge info">Saved</span>' :
+                        '<span class="badge">Draft</span>';
+    const inhBadge = wf.inheritance === 'cascade' ? '<span class="badge warning">Cascade groupe</span>' : '';
+    card.innerHTML = `
+      <div class="name">${wf.name}</div>
+      <div class="meta-line">${tenantName} <span class="dot"></span> v${wf.version} <span class="dot"></span> ${wf.tokensUsed} tokens</div>
+      <div class="badges">${statusBadge} ${eidasBadge} ${inhBadge}</div>
+      <div class="footer">
+        <button class="btn sm" onclick="event.stopPropagation();openBuilder('${wf.id}')">Edit</button>
+        <button class="btn sm" onclick="event.stopPropagation();testJourney('${wf.id}')">Test journey</button>
+        <button class="btn sm" onclick="event.stopPropagation();duplicateWorkflow('${wf.id}')">Duplicate</button>
+        <button class="btn sm ghost" onclick="event.stopPropagation();exportJSON('${wf.id}')">Export JSON</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  // append "new" card if role allows
+  if (ROLES[currentRoleKey].nav.includes('workflows')) {
+    const newCard = document.createElement('div');
+    newCard.className = 'new-workflow-card';
+    newCard.innerHTML = '+ Nouveau parcours<br><span class="text-small text-muted">Builder vierge</span>';
+    newCard.onclick = () => openBuilder();
+    grid.appendChild(newCard);
+  }
+}
+
+function openBuilder(wfId) {
+  navigate('builder');
+  // reset state
+  BUILDER_STATE.doc = { capture: 'video', nfc: 'none', defenses: { pad: true, iad: false, challenges: false, extract: false } };
+  BUILDER_STATE.face = { capture: 'video', defenses: { pad: true, iad: true, challenges: true } };
+  BUILDER_STATE.output = { format: 'standard', flags: { heavy: false } };
+  BUILDER_STATE.eudiwOn = false;
+  // hide eudiw block, show doc
+  document.getElementById('bld-block-doc').classList.remove('hidden');
+  document.getElementById('bld-block-eudiw').classList.add('hidden');
+  document.getElementById('bld-eudiw-toggle').classList.remove('on');
+  // inheritance wrap visibility
+  const role = ROLES[currentRoleKey];
+  const tenant = TENANTS.find(t => t.id === role.tenant);
+  if (tenant && (tenant.kind === 'group_parent' || tenant.kind === 'group_subsidiary')) {
+    document.getElementById('bld-inheritance-wrap').style.display = '';
+  } else {
+    document.getElementById('bld-inheritance-wrap').style.display = 'none';
+  }
+  document.getElementById('bld-name').value = wfId ? (WORKFLOWS.find(w=>w.id===wfId)?.name || '') : '';
+  // attach radio listeners
+  document.querySelectorAll('.radio-pill').forEach(pill => {
+    pill.onclick = () => onRadioPillClick(pill);
+  });
+  recomputeBuilder();
+}
+
+function renderBuilderPage() { recomputeBuilder(); }
+
+function onRadioPillClick(pill) {
+  // identify which radio group
+  let key = null;
+  if (pill.dataset.docCapture) key = ['doc','capture',pill.dataset.docCapture];
+  if (pill.dataset.docNfc) key = ['doc','nfc',pill.dataset.docNfc];
+  if (pill.dataset.faceCapture) key = ['face','capture',pill.dataset.faceCapture];
+  if (pill.dataset.outputFormat) key = ['output','format',pill.dataset.outputFormat];
+  if (!key) return;
+  // unset siblings
+  pill.parentNode.querySelectorAll('.radio-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  BUILDER_STATE[key[0]][key[1]] = key[2];
+  recomputeBuilder();
+}
+
+function toggleDefense(el) {
+  const isOn = el.classList.toggle('on');
+  if (el.dataset.docDefense) BUILDER_STATE.doc.defenses[el.dataset.docDefense] = isOn;
+  if (el.dataset.faceDefense) BUILDER_STATE.face.defenses[el.dataset.faceDefense] = isOn;
+  if (el.dataset.outputFlag) BUILDER_STATE.output.flags[el.dataset.outputFlag] = isOn;
+  recomputeBuilder();
+}
+
+function toggleEudiw(el) {
+  const isOn = el.classList.toggle('on');
+  BUILDER_STATE.eudiwOn = isOn;
+  document.getElementById('bld-block-doc').classList.toggle('hidden', isOn);
+  document.getElementById('bld-block-eudiw').classList.toggle('hidden', !isOn);
+  recomputeBuilder();
+}
+
+/* ====================================================================== *
+ * compute() — eIDAS calculé live + warnings + complexity                  *
+ * ====================================================================== */
+
+function recomputeBuilder() {
+  const result = computeProfile(BUILDER_STATE);
+  // eIDAS level
+  const lvl = result.eidasLevel;
+  const lvlLabel = lvl === 'eleve' ? 'Élevé' : lvl === 'substantiel' ? 'Substantiel' : 'Faible';
+  const elLvl = document.getElementById('bld-eidas-level');
+  if (elLvl) {
+    elLvl.textContent = lvlLabel;
+    elLvl.style.color = lvl === 'eleve' ? 'var(--success)' : lvl === 'substantiel' ? 'var(--info)' : 'var(--text-2)';
+  }
+  // referentials
+  const refs = document.getElementById('bld-eidas-refs');
+  if (refs) {
+    refs.innerHTML = result.referentials.map(r => `<span class="compliance-ref">${r}</span>`).join('');
+  }
+  // complexity
+  const cx = document.getElementById('bld-complexity');
+  if (cx) cx.textContent = result.complexity + '×';
+  // warnings (E1-E6)
+  const warn = document.getElementById('bld-warnings');
+  if (warn) {
+    if (result.warnings.length === 0) warn.innerHTML = '';
+    else warn.innerHTML = result.warnings.map(w => `
+      <div class="exclusion-warning">
+        <span style="font-size:16px;line-height:1;">⚠</span>
+        <div><strong>${w.code}</strong> : ${w.msg}</div>
+      </div>`).join('');
+  }
+}
+
+function computeProfile(s) {
+  // simplified compute() — derived from demo3 logic + bug fix NFC F7/F8 = Élevé
+  const docOn = !s.eudiwOn;
+  const eudiwOn = s.eudiwOn;
+  const faceOn = s.face.capture !== 'none';
+  const warnings = [];
+  // Règles E1-E6
+  if (!docOn && !eudiwOn && !faceOn) warnings.push({ code: 'E1', msg: 'Pas de vérification possible — DOC ni FACE.' });
+  if (!docOn && !eudiwOn && faceOn) warnings.push({ code: 'E2', msg: 'Face seule ≠ IDV initial (réauth uniquement).' });
+  if ((docOn || eudiwOn) && !faceOn) warnings.push({ code: 'E3', msg: 'Doc/EUDIw sans Face ne vérifie pas l\'identité d\'une personne.' });
+  if (s.doc.defenses.iad && faceOn && !s.face.defenses.iad) warnings.push({ code: 'E4', msg: 'IAD sur Doc mais pas sur Face — faille canal exposé.' });
+  if (s.doc.defenses.pad && s.face.capture === 'video' && !s.face.defenses.pad) warnings.push({ code: 'E5', msg: 'PAD asymétrique Doc/Face vidéo.' });
+  if (s.face.capture === 'video' && !s.face.defenses.pad) warnings.push({ code: 'E6', msg: 'Face vidéo sans PAD — UX lourde sans bénéfice sécurité.' });
+  // Niveau eIDAS
+  let eidasLevel = 'faible';
+  let referentials = [];
+  if (eudiwOn && faceOn) {
+    eidasLevel = 'eleve';
+    referentials = ['eIDAS 2', 'ETSI 119461', 'ISO 18013-5'];
+  } else if (s.doc.nfc === 'strict' && s.face.capture === 'video' && s.face.defenses.iad) {
+    eidasLevel = 'eleve';
+    referentials = ['eIDAS Élevé', 'PVID v2', 'ISO 18013-5'];
+  } else if ((s.doc.nfc === 'strict' || s.doc.nfc === 'fallback') && s.face.capture === 'video') {
+    // bug fix : NFC + Face video (F7/F8) = Élevé
+    if (s.face.defenses.iad && s.face.defenses.challenges) {
+      eidasLevel = 'eleve';
+      referentials = ['eIDAS Élevé', 'PVID v1+v2', 'AMLR'];
+    } else {
+      eidasLevel = 'substantiel';
+      referentials = ['eIDAS Substantiel', 'AMLR', 'PVID v1'];
+    }
+  } else if (s.face.capture === 'video' && s.face.defenses.iad) {
+    eidasLevel = 'substantiel';
+    referentials = ['eIDAS Substantiel', 'AMLR'];
+  } else if (faceOn && s.doc.capture) {
+    eidasLevel = 'faible';
+    referentials = ['eIDAS Faible', 'AMLD5'];
+  }
+  if (s.output.flags.heavy) referentials.push('RGPD Art.32');
+  // Complexity
+  let complexity = 1;
+  if (s.doc.nfc === 'fallback' || s.doc.nfc === 'strict') complexity++;
+  if (s.face.defenses.iad) complexity++;
+  if (s.output.flags.heavy) complexity++;
+  return { eidasLevel, referentials, complexity, warnings };
+}
+
+function saveWorkflow() {
+  const name = document.getElementById('bld-name').value.trim();
+  if (!name) { alert('Nom du parcours requis'); return; }
+  const role = ROLES[currentRoleKey];
+  const inh = document.getElementById('bld-inheritance-wrap').style.display === 'none' ? 'local_only' : (document.getElementById('bld-inheritance').value || 'local_only');
+  const r = computeProfile(BUILDER_STATE);
+  const id = 'wf' + (WORKFLOWS.length + 1);
+  WORKFLOWS.push({
+    id, tenant: role.tenant, name, version: 1, status: 'saved',
+    eidas: r.eidasLevel, tokensUsed: 0, lastModified: new Date().toISOString().slice(0,10),
+    vertical: document.getElementById('bld-vertical').value || '—',
+    inheritance: inh
+  });
+  alert('✅ Parcours "' + name + '" sauvegardé.\nNiveau d\'assurance dérivé : ' + r.eidasLevel + '.\nShareID Environment Pack généré (Dashboard URL, SDK, API key, Webhook, QR test, Mobile demo app).');
+  navigate('workflows');
+}
+
+function testJourney(wfId) {
+  const wf = WORKFLOWS.find(w => w.id === wfId);
+  if (!wf) return;
+  alert('🔗 QR code de test généré pour "' + wf.name + '"\n\nLien démo : https://demo.shareid.io/' + wfId + '\nExpiration : 30 jours\nMode : web + mobile demo app\n\n(mocké — en prod, ouvrirait un vrai QR scannable)');
+}
+
+function duplicateWorkflow(wfId) {
+  const wf = WORKFLOWS.find(w => w.id === wfId);
+  if (!wf) return;
+  const copy = Object.assign({}, wf);
+  copy.id = 'wf' + (WORKFLOWS.length + 1);
+  copy.name = 'Copy of ' + wf.name;
+  copy.status = 'draft';
+  copy.version = 1;
+  copy.tokensUsed = 0;
+  WORKFLOWS.push(copy);
+  alert('✅ Parcours dupliqué : "' + copy.name + '"');
+  renderWorkflowsPage();
+}
+
+function exportJSON(wfId) {
+  const wf = WORKFLOWS.find(w => w.id === wfId);
+  if (!wf) return;
+  const json = {
+    schema_version: 'v3',
+    use_case: { id: wf.id, name: wf.name, type: 'IDV', certification_target: wf.eidas },
+    client: { business_name: getTenantName(wf.tenant) },
+    compliance: { eidas_level_computed: wf.eidas, referentials_covered: ['eIDAS', 'AMLR', 'RGPD'] },
+    journey: { document: { method: 'photo+nfc', capture: 'video' }, face: { method: 'video', level: 'F5' } },
+    output: { format: 'json_standard' }
+  };
+  alert('📋 JSON spec exporté\n\n' + JSON.stringify(json, null, 2).slice(0, 400) + '...');
+}
+
+/* ====================================================================== *
+ * Onboardings + Replay                                                     *
+ * ====================================================================== */
+
+function getVisibleOnboardings() {
+  const role = ROLES[currentRoleKey];
+  if (currentRoleKey === 'shareid_sales') return ONBOARDINGS;
+  if (currentRoleKey === 'group_admin_atijari') {
+    const descendants = TENANTS.filter(t => isDescendantOf(t.id, 'atijari-group')).map(t => t.id);
+    return ONBOARDINGS.filter(o => descendants.includes(o.tenant));
+  }
+  if (currentRoleKey === 'retailer_admin_tessie') {
+    const descendants = TENANTS.filter(t => isDescendantOf(t.id, 'tessie')).map(t => t.id);
+    return ONBOARDINGS.filter(o => descendants.includes(o.tenant));
+  }
+  return ONBOARDINGS.filter(o => o.tenant === role.tenant);
+}
+
+function renderOnboardingsPage() {
+  const obs = getVisibleOnboardings();
+  // KPIs
+  const kpis = document.getElementById('onb-kpis');
+  const total = obs.length;
+  const green = obs.filter(o => o.verdict === 'green').length;
+  const orange = obs.filter(o => o.verdict === 'orange').length;
+  const red = obs.filter(o => o.verdict === 'red').length;
+  const avgLat = total ? Math.round(obs.reduce((s,o) => s + o.latencyMs, 0) / total) : 0;
+  kpis.innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Total 30j</div><div class="kpi-value">${total}</div><div class="kpi-trend">+12%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Verdict vert</div><div class="kpi-value">${green}</div><div class="kpi-trend">${total ? Math.round(green/total*100) : 0}%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Verdict orange/rouge</div><div class="kpi-value">${orange + red}</div><div class="kpi-trend down">${total ? Math.round((orange+red)/total*100) : 0}%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Latence moy.</div><div class="kpi-value">${avgLat}ms</div><div class="kpi-trend">-8%</div></div>`;
+
+  const role = ROLES[currentRoleKey];
+  const canPII = role.canPII;
+  // table
+  const tbody = document.getElementById('onb-tbody');
+  tbody.innerHTML = '';
+  obs.slice(0, 50).forEach(o => {
+    const wf = WORKFLOWS.find(w => w.id === o.workflow);
+    const verdictBadge = o.verdict === 'green' ? '<span class="badge success">✓ Authentic</span>' :
+                         o.verdict === 'orange' ? '<span class="badge warning">⚠ Doute</span>' :
+                         '<span class="badge danger">✕ Reject</span>';
+    const applicantDisplay = canPII
+      ? `<span><strong>${o.applicantName}</strong><br><span class="text-small text-muted">${o.applicantId}</span></span>`
+      : `<span class="pii-blur"><strong>${o.applicantName}</strong></span> <span class="pii-redacted text-small">— PII non visible</span>`;
+    const tr = document.createElement('tr');
+    tr.className = 'clickable';
+    tr.innerHTML = `
+      <td>${o.date}</td>
+      <td>${applicantDisplay}</td>
+      <td>${getTenantName(o.tenant)}</td>
+      <td>${wf ? wf.name + ' (v' + wf.version + ')' : '—'}</td>
+      <td>${verdictBadge}</td>
+      <td>${o.latencyMs}ms</td>
+      <td><button class="btn sm" onclick="openReplay('${o.id}')">Replay</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function openReplay(onbId) {
+  const o = ONBOARDINGS.find(x => x.id === onbId);
+  if (!o) return;
+  const wf = WORKFLOWS.find(w => w.id === o.workflow);
+  const role = ROLES[currentRoleKey];
+  const canPII = role.canPII;
+  const body = document.getElementById('drawer-body');
+  const verdictColor = o.verdict === 'green' ? 'success' : o.verdict === 'orange' ? 'warning' : 'danger';
+  const verdictText = o.verdict === 'green' ? 'Authentic' : o.verdict === 'orange' ? 'Doute' : 'Reject';
+  body.innerHTML = `
+    <div class="panel">
+      <div class="panel-h">${o.id}</div>
+      <div class="text-small text-muted">${o.date} • Latence ${o.latencyMs}ms • <strong>${getTenantName(o.tenant)}</strong></div>
+      <div style="margin-top:8px;">
+        ${canPII ? `<strong>${o.applicantName}</strong><br><span class="text-muted text-small">${o.applicantId}</span>` : '<span class="pii-redacted">— PII non visible (data_visibility = none)</span>'}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h">Pattern 3-criteria — replay du verdict</div>
+      <div class="verdict-step">
+        <div class="step-name">Doc step</div>
+        <div class="verdict-criteria">
+          <span class="badge success">✓ Authentic</span>
+          <span class="badge success">✓ Valid</span>
+          <span class="badge ${verdictColor}">${o.verdict === 'green' ? '✓' : '⚠'} Coherent</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="verdict-step">
+        <div class="step-name">Face step</div>
+        <div class="verdict-criteria">
+          <span class="badge success">✓ Detected</span>
+          <span class="badge ${o.verdict === 'red' ? 'danger' : 'success'}">${o.verdict === 'red' ? '✕' : '✓'} Liveness</span>
+          <span class="badge ${verdictColor}">${o.verdict === 'green' ? '✓' : '⚠'} Encoding match</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="verdict-step">
+        <div class="step-name">Output step</div>
+        <div class="verdict-criteria">
+          <span class="badge success">✓ Generated</span>
+          <span class="badge success">✓ Delivered</span>
+          <span class="badge success">✓ Confirmed</span>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <span class="badge ${verdictColor}">Verdict global : ${verdictText}</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h">JSON résultat brut</div>
+      <pre class="json-block">${JSON.stringify({
+        id: o.id, date: o.date, tenant: o.tenant, workflow: o.workflow,
+        verdict: o.verdict, latency_ms: o.latencyMs,
+        applicant: canPII ? { id: o.applicantId, name: o.applicantName } : 'redacted',
+        eidas_level: wf ? wf.eidas : 'unknown'
+      }, null, 2)}</pre>
+    </div>
+    <div class="panel">
+      <div class="panel-h">Règles déclenchées</div>
+      <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7;">
+        <li>NFC fallback activé — chip lu avec succès</li>
+        <li>PAD Doc OK</li>
+        <li>Face IAD OK</li>
+        <li>Active challenges : 2/2 réussis</li>
+        ${o.verdict !== 'green' ? '<li style="color:var(--warning);"><strong>⚠ Cohérence Doc/Face : score 78% (seuil 85%) — fallback opérateur</strong></li>' : ''}
+      </ul>
+    </div>`;
+  document.getElementById('drawer-replay').classList.add('open');
+  document.getElementById('drawer-replay-inner').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-replay').classList.remove('open');
+  document.getElementById('drawer-replay-inner').classList.remove('open');
+}
+
+/* ====================================================================== *
+ * Reporting                                                                *
+ * ====================================================================== */
+
+function renderReportingPage() {
+  const obs = getVisibleOnboardings();
+  const kpis = document.getElementById('rep-kpis');
+  const total = obs.length;
+  const green = obs.filter(o => o.verdict === 'green').length;
+  const successRate = total ? Math.round(green / total * 1000) / 10 : 0;
+  kpis.innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Onboardings 30j</div><div class="kpi-value">${total}</div><div class="kpi-trend">+18%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Taux de succès</div><div class="kpi-value">${successRate}%</div><div class="kpi-trend">+1.2 pts</div></div>
+    <div class="kpi-card"><div class="kpi-label">Latence p95</div><div class="kpi-value">3 850ms</div><div class="kpi-trend">-12%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Profils actifs</div><div class="kpi-value">${getCurrentTenantWorkflows().filter(w => w.status === 'live').length}</div><div class="kpi-trend">+1</div></div>`;
+}
+
+/* ====================================================================== *
+ * Group console                                                            *
+ * ====================================================================== */
+
+function renderGroupPage() {
+  const filiales = TENANTS.filter(t => t.parent === 'atijari-group');
+  const grid = document.getElementById('group-cards');
+  grid.innerHTML = '';
+  filiales.forEach(f => {
+    const obs = ONBOARDINGS.filter(o => o.tenant === f.id);
+    const wfs = WORKFLOWS.filter(w => w.tenant === f.id);
+    const total = obs.length;
+    const green = obs.filter(o => o.verdict === 'green').length;
+    const card = document.createElement('div');
+    card.className = 'group-card';
+    card.innerHTML = `
+      <div class="group-card-name">${f.name}</div>
+      <div class="group-card-stats">
+        <div class="group-card-stat"><span class="lbl">Onboardings 30j</span><span class="val">${total}</span></div>
+        <div class="group-card-stat"><span class="lbl">Profils déployés</span><span class="val">${wfs.length}</span></div>
+        <div class="group-card-stat"><span class="lbl">Taux verdict vert</span><span class="val">${total ? Math.round(green/total*100) : 0}%</span></div>
+        <div class="group-card-stat"><span class="lbl">Latence moy.</span><span class="val">${total ? Math.round(obs.reduce((s,o)=>s+o.latencyMs,0)/total) : 0}ms</span></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:6px;">
+        <button class="btn sm" onclick="alert('Drilldown filiale ${f.name} (mocké)')">Drilldown</button>
+        <button class="btn sm ghost" onclick="alert('PII visible (data_visibility=full descendant Atijari)')">Voir PII</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ====================================================================== *
+ * Settings                                                                 *
+ * ====================================================================== */
+
+function switchSettingsTab(el, tab) {
+  document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('settings-' + tab).classList.add('active');
+}
+
+/* ====================================================================== *
+ * Modals utility                                                           *
+ * ====================================================================== */
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+</script>
+</body>
+</html>
